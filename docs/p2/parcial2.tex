@@ -1,0 +1,398 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-noquoting]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=2cm,right=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{float}
+\usepackage{xcolor}
+\definecolor{usaAzul}{HTML}{003057}
+\definecolor{usaGris}{HTML}{5A6570}
+\definecolor{cajaFondo}{HTML}{F2F5F7}
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{1.8ex plus .2ex}{0.8ex}
+\titleformat{\section}{\large\bfseries\color{usaAzul}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{usaAzul}}{\thesubsection}{0.7em}{}
+\usepackage{enumitem}
+\setlist{noitemsep,topsep=3pt}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\color{usaGris} Parcial 2, Panel gerencial de ocupación}
+\fancyhead[R]{\footnotesize\color{usaGris} Cristancho \& Urrego}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,frame=single,rulecolor=\color{usaGris},backgroundcolor=\color{cajaFondo},showstringspaces=false}
+\usepackage[hidelinks,colorlinks=true,linkcolor=usaAzul,urlcolor=usaAzul,citecolor=usaAzul]{hyperref}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4pt}
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash\footnotesize}p{#1}}
+\newcolumntype{C}[1]{>{\Centering\arraybackslash\footnotesize}p{#1}}
+\newcolumntype{R}[1]{>{\RaggedLeft\arraybackslash\footnotesize}p{#1}}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,fit,positioning,backgrounds}
+\newcommand{\trazo}[2]{\par\smallskip\noindent\textbf{#1.} \textit{#2}\par\smallskip}
+
+\begin{document}
+\begin{titlepage}
+\centering
+\vspace*{0.5cm}
+\IfFileExists{Logo.png}{\includegraphics[width=0.42\textwidth]{Logo.png}}{%
+\IfFileExists{logo-usa.pdf}{\includegraphics[width=0.42\textwidth]{logo-usa.pdf}}{%
+\fbox{\parbox[c][3.2cm][c]{0.42\textwidth}{\centering\color{usaGris}\small [ Logo.png ]}}}}
+\vspace{1.0cm}
+
+{\Large\scshape\color{usaAzul} Universidad Sergio Arboleda\par}
+\vspace{0.35cm}
+{\large Escuela de Ingeniería y Ciencias Exactas\par}
+\vspace{0.15cm}
+{\large Programa de Ciencias de la Computación e Inteligencia Artificial\par}
+\vspace{1.4cm}
+{\color{usaAzul}\rule{\textwidth}{1.2pt}}
+\vspace{0.7cm}
+
+{\Huge\bfseries Sistema de Reservas Aéreas\par}
+\vspace{0.5cm}
+{\LARGE Panel gerencial de ocupación: EMR, Glue y Athena\par}
+\vspace{0.7cm}
+{\color{usaAzul}\rule{\textwidth}{1.2pt}}
+\vspace{1.6cm}
+
+{\large\bfseries Segundo Examen Parcial\par}
+\vspace{0.2cm}
+{\large Big Data and Data Engineering\par}
+\vspace{1.6cm}
+{\large\bfseries Autores\par}
+\vspace{0.3cm}
+{\large Julian Cristancho\par}
+\vspace{0.15cm}
+{\large Andrés Urrego\par}
+\vspace{0.6cm}
+{\large Semilla (seed) del equipo: 2682\par}
+\vfill
+{\large Bogotá D.C., Colombia\par}
+{\large \today\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+%=====================================================================
+\section{Resumen}
+Este documento justifica las decisiones de arquitectura del segundo parcial. Al sistema de reservas del parcial 1 se le agregó un frontend, un trabajo por lotes en EMR que limpia dos años de historia (2.000.542 reservas curadas) y una capa de consulta con Glue Data Catalog y Athena. Con eso el gerente ve la ocupación por ruta y mes en un panel.
+
+El harness oficial dio 70/70 puntos en la corrida que se incluye en la sección~\ref{sec:harness}. La proyección de costo declarada es de US\$34,83 al mes, bajo el tope de US\$50.
+
+Hay tres cosas que conviene declarar desde el principio:
+\begin{itemize}
+  \item \textbf{Campo \texttt{bookings}.} El contrato textual dice que \texttt{bookings} cuenta solo reservas CONFIRMED, pero el oráculo del harness (\texttt{oracle.py}) cuenta CONFIRMED más CANCELLED. Seguimos al oráculo. Ningún test revisa ese campo.
+  \item \textbf{Servicio Lambda en R11.} El harness detectó 7 servicios facturables: Athena, EC2, EMR, Glue, Lambda, RDS y S3. Las funciones Lambda (RedshiftOverwatch, MainMonitoringFunction, ModLabRole, RoleCreationFunction, RedshiftEventSubscription) pertenecen al propio Learner Lab. Nosotros no creamos ninguna.
+  \item \textbf{Lugar donde se corrió el harness.} Se corrió desde la propia EC2 con URLs \texttt{localhost}, porque la EC2 no alcanza su propia IP pública (el grupo de seguridad solo permite IPs del equipo). El \texttt{config.yaml} entregado usa la IP pública fija.
+\end{itemize}
+
+%=====================================================================
+\section{Arquitectura}
+\label{sec:arq}
+La figura~\ref{fig:arq} muestra lo que está desplegado en la cuenta del Learner Lab (us-east-1). Hay dos caminos que no se tocan entre sí. El transaccional va de la EC2 a RDS. El analítico va de S3 a EMR, de EMR a S3 curado, y de ahí a Athena, que la API consulta solo para el panel.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\footnotesize,
+  box/.style={draw=usaAzul,thick,rounded corners=3pt,fill=white,align=center,minimum height=1.0cm,minimum width=2.6cm,inner sep=4pt},
+  svc/.style={box,fill=cajaFondo},
+  oltp/.style={-{Stealth[length=2.4mm]},thick,color=usaAzul},
+  olap/.style={-{Stealth[length=2.4mm]},thick,color=orange!80!black},
+  lbl/.style={font=\scriptsize,fill=white,inner sep=1.5pt}
+]
+\node[box] (user) at (0,0) {Cliente y\\gerente\\(navegador)};
+\node[svc] (nginx) at (4.6,0.9) {nginx\\frontend \texttt{:3000}};
+\node[svc] (api) at (4.6,-1.1) {FastAPI en Docker\\API \texttt{:8000}};
+\begin{scope}[on background layer]
+\node[draw=usaGris,dashed,rounded corners=4pt,fill=cajaFondo!50,fit=(nginx)(api),inner sep=8pt,label={[font=\scriptsize,text=usaGris]above:EC2 t3.small, IP elástica}] (ec2) {};
+\end{scope}
+\node[svc] (rds) at (10.4,-1.1) {RDS PostgreSQL 16\\db.t3.micro, single-AZ\\(inventario)};
+\node[svc] (ath) at (4.6,-4.6) {Athena\\workgroup \texttt{primary}};
+\node[svc] (glue) at (10.4,-4.6) {Glue Data Catalog\\\texttt{airline\_analytics}\\partition projection};
+\node[svc] (cur) at (4.6,-7.9) {S3 curated\\Parquet, 24 particiones\\(\texttt{month=YYYY-MM})};
+\node[svc] (emr) at (10.4,-7.9) {EMR 7.14.0, efímero\\1 master + 2 core m4.large\\\texttt{--auto-terminate}};
+\node[svc] (raw) at (14.9,-7.9) {S3 raw\\CSV 82 MB};
+\draw[oltp] (user.east) -- ++(0.6,0) |- (nginx.west) node[lbl,pos=0.75] {HTTP};
+\draw[oltp] (nginx.south) -- (api.north) node[lbl,midway] {\texttt{/api/}};
+\draw[oltp] (api.east) -- (rds.west) node[lbl,midway] {reservas};
+\draw[olap] (api.south) -- (ath.north) node[lbl,midway] {\texttt{/analytics/occupancy}};
+\draw[olap] (ath.east) -- (glue.west) node[lbl,midway] {esquema};
+\draw[olap] (ath.south) -- (cur.north) node[lbl,midway] {lee Parquet};
+\draw[olap] (raw.west) -- (emr.east) node[lbl,midway] {lee};
+\draw[olap] (emr.west) -- (cur.east) node[lbl,midway] {escribe};
+\node[font=\scriptsize,anchor=west] at (-0.8,-6.2) {\textcolor{usaAzul}{\rule[0.5ex]{0.7cm}{1.2pt}} camino transaccional};
+\node[font=\scriptsize,anchor=west] at (-0.8,-6.8) {\textcolor{orange!80!black}{\rule[0.5ex]{0.7cm}{1.2pt}} camino analítico};
+\end{tikzpicture}
+\caption{Arquitectura desplegada. Todo está en una VPC por defecto, una sola AZ, sin NAT ni balanceador.}
+\label{fig:arq}
+\end{figure}
+
+\paragraph{Flujos.}
+El cliente busca y reserva en \texttt{/} y la API actualiza el inventario en RDS. El gerente abre \texttt{/manager}. nginx reenvía \texttt{/api/} a FastAPI, que lanza una consulta parametrizada a Athena sobre \texttt{route\_month\_metrics} y devuelve el JSON. El panel solo muestra ese número. EMR no está en el camino de las peticiones: corre cuando se necesita refrescar los datos, lee \texttt{raw/} y reescribe \texttt{curated/}. Los parámetros de la base y las credenciales están en SSM Parameter Store (\texttt{/airline/db/*}), y la EC2 usa el rol del laboratorio para llamar a Athena, sin claves en el código.
+
+%=====================================================================
+\section{Decisiones de diseño}
+
+\subsection{Modelo de hosting}
+\trazo{Requisitos: R1, R2, R11, R12 y RF-14 del parcial 1}{Pilares: eficiencia de costo, fiabilidad, eficiencia de rendimiento}
+Backend y frontend corren como dos contenedores Docker en una sola EC2 t3.small (\texttt{airline-api} en el 8000 y \texttt{airline-web}, nginx, en el 3000). El inventario está en RDS PostgreSQL 16 db.t3.micro, single-AZ. Se eligió así porque es lo más barato que cumple R1 y R2. La reserva es una transacción con un \texttt{UPDATE} condicional (\texttt{seats\_available = seats\_available - 1 WHERE seats\_available > 0}), y eso lo resuelve PostgreSQL sin servicios extra. En la corrida del harness la búsqueda dio p95 de 0,077~s con 20 clientes simultáneos (límite 1,0~s) y las 5 rondas de 50 reservas simultáneas dejaron exactamente 1 respuesta 201 y 49 respuestas 409.
+
+Se descartaron alternativas más gestionadas (por ejemplo contenedores en un servicio orquestado detrás de un balanceador) porque el balanceador solo ya cuesta unos US\$16 al mes y R11 pide una arquitectura simple. Se descartó instalar PostgreSQL dentro de la EC2 para no encargarnos nosotros de copias de seguridad y parches, que RDS ya incluye. Multi-AZ está prohibido por R11, así que aceptamos un riesgo de fiabilidad: si la zona cae, el sistema cae. Para este parcial es un riesgo aceptable y está declarado.
+
+El frontend estático va en la misma EC2 y no en S3 con CloudFront. Así no se agrega un servicio facturable y el navegador habla con un solo origen, lo que evita problemas de CORS. La EC2 tiene una IP elástica (US\$3,65 al mes) porque el enunciado avisa que la IP pública cambia cuando el Learner Lab se reinicia y la calificación usa las URLs del \texttt{config.yaml}.
+
+Seguridad: la base nunca se abre a internet. Los puertos 8000 y 3000 del grupo de seguridad de la API solo permiten las IPs del equipo. Para la ventana de calificación, el script \texttt{infra/abrir\_calificacion.sh} los abre a internet y \texttt{infra/cerrar\_calificacion.sh} los cierra después. Es temporal porque \texttt{POST /admin/flights}, que exige el contrato, no tiene autenticación.
+
+\subsection{Por qué EMR}
+\trazo{Requisitos: R4, R10, R11, R12}{Pilares: eficiencia de costo, excelencia operativa, sostenibilidad}
+El trabajo por lotes (\texttt{emr/curate.py}, PySpark) lee 2.000.000 de reservas sucias y sus vuelos y aplica C1 a C5. Quita espacios y pasa a mayúsculas la ruta y el estado, descarta estados distintos de CONFIRMED y CANCELLED, descarta precios nulos o menores o iguales a cero, y elimina \texttt{reservation\_id} duplicados. Luego une con los vuelos limpios, escribe el detalle en Parquet particionado por mes y calcula la tabla \texttt{route\_month\_metrics} (ocupación, ingresos, reservas y cancelaciones por ruta y mes). La capacidad se suma desde los vuelos y no desde las reservas, para que un vuelo sin ventas siga contando sus asientos. Todo se lee como texto y los tipos se convierten a mano, porque \texttt{price\_cents} llega vacío o con decimales y Spark lo infería mal.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.9cm} L{7.2cm} L{6.5cm}}
+\toprule
+\textbf{Regla} & \textbf{Definición} & \textbf{Cómo se aplica en \texttt{curate.py}} \\
+\midrule
+C1 & Ruta sin espacios y en mayúsculas & \texttt{upper(regexp\_replace(route, '\textbackslash s+', ''))} sobre los vuelos \\
+C2 & Estado sin espacios y en mayúsculas & \texttt{upper(trim(status))} \\
+C3 & Solo CONFIRMED o CANCELLED & Filtro \texttt{status IN (...)} \\
+C4 & Precio presente y mayor que 0 & Cast a \texttt{double}, filtro, cast final a \texttt{bigint} \\
+C5 & Quitar \texttt{reservation\_id} duplicados & \texttt{dropDuplicates} sobre \texttt{reservation\_id} \\
+\bottomrule
+\end{tabular}
+\caption{Reglas de limpieza y su implementación. Los duplicados son copias exactas, por eso no importa cuál se conserve.}
+\end{table}
+
+Lo que hace el lote y Athena sola no hace es dejar los datos en el formato correcto. Athena consulta, pero sobre el CSV sucio tendría que repetir la limpieza en cada consulta y leer los 82~MB cada vez. El lote limpia una vez y deja Parquet particionado, de modo que las consultas del panel son baratas.
+
+Alternativas consideradas:
+\begin{itemize}
+  \item \textbf{Athena CTAS.} Podría expresar C1 a C5 en SQL y escribir Parquet particionado. No la usamos porque R4 exige que el Parquet lo escriba una corrida de EMR, y porque con Spark controlamos el número de archivos por partición.
+  \item \textbf{Job de Glue.} También es Spark y cobra por DPU-segundo sin administrar clúster. Tampoco cumple R4, que pide EMR. Lo usamos en el parcial 1 para el ETL de OLTP a OLAP, no aquí.
+\end{itemize}
+
+Elegimos un clúster EMR y no EMR Serverless (no probamos Serverless). Es un lote corto y un clúster efímero da el mismo resultado, con un control directo del apagado y del conteo de horas normalizadas que R10 mide. El clúster es emr-7.14.0 con 1 master y 2 core, todos \texttt{m4.large}, que es el único tipo permitido por R11. Son los nodos mínimos para que Spark distribuya el trabajo.
+
+El apagado (R10) se garantiza de cuatro formas. El clúster se crea con \texttt{--auto-terminate}, así que se apaga cuando termina el último paso. El paso tiene \texttt{ActionOnFailure=TERMINATE\_CLUSTER}, así que también se apaga si falla. El script \texttt{emr/run\_emr.sh} espera con \texttt{aws emr wait cluster-terminated}. Al final lista \texttt{aws emr list-clusters --active}, que salió vacío.
+
+Se hicieron dos corridas, cada una de 12 horas normalizadas: primero una muestra del 5\,\% para validar el job sin gastar presupuesto (\texttt{j-0600594649\allowbreak O6OD8KSHE}) y después la corrida completa (\texttt{j-06661302ZS6EJJ3Z\allowbreak 0HBI}). Suman 24 horas normalizadas, contra un límite de 150. La corrida completa fue la última y sobrescribió \texttt{curated/}, así que los 24 archivos Parquet se escribieron dentro de una ventana COMPLETED, como pide R4.
+
+\subsection{Layout de los datos}
+\trazo{Requisitos: R5, R6, R12}{Pilares: eficiencia de rendimiento, eficiencia de costo, sostenibilidad}
+\textbf{Por qué Parquet.} Es columnar y comprimido. Athena cobra por bytes leídos y solo lee las columnas que la consulta usa. El CSV crudo pesa 82~MB y el detalle en Parquet pesa 19,5~MB (19.478.722~B en 24 archivos), un 76\,\% menos.
+
+\textbf{Por qué partición por mes.} Las consultas del panel filtran por mes. Con \texttt{month=YYYY-MM} Athena abre solo esa carpeta. En la verificación, una consulta de un mes (\texttt{count} y \texttt{sum(price\_cents)} con \texttt{WHERE month='2024-01'}) escaneó 308.482~B. El tamaño promedio de una partición es 811.613~B, así que el límite de R6 (dos veces el promedio) es 1.623.226~B y quedamos en 0,38 veces el promedio. Antes de escribir se hace \texttt{repartition("month")}, así queda un archivo por mes y no muchos archivos pequeños.
+
+\textbf{Qué pasaría sin partición.} La consulta tendría que recorrer la columna de precios de los 24 meses. Estimamos unos 24 por 308~KB, es decir unos 7,4~MB, casi cinco veces el límite de 1,62~MB, y R6 fallaría. Si fuera \texttt{SELECT *} serían los 19,5~MB, y sobre el CSV, 82~MB. Esta cifra es una estimación a partir de lo medido por mes; no se ejecutó esa consulta.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{L{7.4cm} L{6.6cm}}
+\toprule
+\textbf{Ruta en S3 (bucket del proyecto)} & \textbf{Contenido} \\
+\midrule
+\texttt{raw/} & \texttt{flights.csv} (0,4~MB) y \texttt{reservations.csv} (82~MB), sucios \\
+\texttt{raw-sample/} & Todos los vuelos y 1 de cada 20 reservas (5\,\%), para probar \\
+\texttt{curated/reservations\_curated/} \texttt{month=YYYY-MM/} & Detalle limpio en Parquet, 24 particiones, 19,5~MB en total \\
+\texttt{curated/route\_month\_metrics/} & Métricas por ruta y mes en un solo archivo Parquet (unos 9~KB) \\
+\texttt{athena-results/}, \texttt{emr/logs/} & Resultados de Athena y registros de EMR \\
+\bottomrule
+\end{tabular}
+\caption{Organización de los datos.}
+\end{table}
+
+\textbf{Catálogo.} Las dos tablas están en la base \texttt{airline\_analytics} de Glue, con columnas en el orden del contrato. \texttt{reservations\_curated} usa \emph{partition projection} (\texttt{projection.month.type=date}, formato \texttt{yyyy-MM}, rango 2023-01 a 2024-12). Athena calcula las rutas de las particiones sin consultar el catálogo, no hay que correr \texttt{MSCK REPAIR TABLE} y el catálogo no se desactualiza. La limitación es que, si llegan meses fuera del rango, hay que ampliarlo.
+
+\subsection{Cómo obtiene el panel sus números}
+\trazo{Requisitos: R6, R7, R9, R12}{Pilares: eficiencia de rendimiento, eficiencia de costo, excelencia operativa}
+El panel llama a \texttt{GET /analytics/occupancy} y el endpoint consulta Athena. No consulta RDS ni un archivo local, de modo que el número que ve el gerente es el que sale del lago de datos que produjo EMR. El panel solo formatea \texttt{occupancy} en porcentaje con tres decimales (por ejemplo 60,960\,\%), así que coincide con el endpoint dentro de la tolerancia de R9.
+
+La consulta es \texttt{WHERE route = ? AND month = ?} con \texttt{ExecutionParameters}, y además la ruta y el mes se validan con expresiones regulares antes de llamar a Athena (422 si el formato es malo). Así nunca se concatena texto del usuario al SQL. Hay 404 si no hay fila y 503 si Athena falla, con un tiempo máximo de 9~s para respetar los 10~s de R7.
+
+\begin{itemize}
+  \item \textbf{Latencia.} En el harness, las 5 consultas de prueba de R7 tardaron entre 0,80 y 1,41~s. Es más lento que una consulta a RDS, pero aceptable para un panel gerencial.
+  \item \textbf{Costo por consulta.} Athena cobra US\$5 por TB y mínimo 10~MB por consulta, es decir unos US\$0,00005. La tabla de métricas pesa kilobytes (el top 10 por ocupación escaneó 1.318~B), así que cada consulta paga el mínimo.
+  \item \textbf{Frescura.} Los datos son tan frescos como la última corrida de EMR. Es un sistema por lotes: un reporte gerencial histórico no necesita datos de hoy.
+  \item \textbf{Caché.} Sí se justifica, con una condición. La primera consulta de cada par (ruta, mes) siempre va a Athena, que es lo que R7 verifica. Después se guarda en memoria durante 10 minutos, solo para respuestas exitosas, porque el dato solo cambia cuando corre EMR. El caché es por proceso (la API tiene 2 workers) y es suficiente aquí. Con más usuarios haría falta un caché compartido.
+\end{itemize}
+
+\subsection{Separación de cargas}
+\trazo{Requisitos: R1, R2 y RF-14 del parcial 1}{Pilares: fiabilidad, eficiencia de rendimiento}
+Las búsquedas y reservas usan solo RDS. El panel usa solo Athena y S3. Ninguna consulta analítica toca la base transaccional, así que un gerente consultando no consume conexiones ni CPU del inventario. El trabajo pesado de limpieza corre en el clúster EMR, que lee y escribe en S3 y no tiene conexión a RDS. Si Athena falla, solo \texttt{/analytics/occupancy} responde 503 y el resto de la API sigue funcionando. La evidencia es que R1 y R2 se midieron con el sistema completo desplegado.
+
+Una limitación honesta: la API de reservas y el endpoint analítico comparten la misma EC2 y sus 2 workers. Un pico de consultas al panel podría competir por CPU de esa máquina aunque no toque la base. Con el caché y el costo en CPU de una llamada a Athena (casi todo es espera de red) lo consideramos bajo, pero no lo medimos bajo carga mixta.
+
+%=====================================================================
+\section{Justificación de servicios}
+\begin{table}[H]
+\centering
+\begin{tabular}{L{2.4cm} L{3.7cm} L{3.4cm} L{4.6cm}}
+\toprule
+\textbf{Servicio} & \textbf{Alternativa considerada} & \textbf{Requisito} & \textbf{Pilares} \\
+\midrule
+EC2 t3.small & Contenedores orquestados con balanceador & R1, R2, R11, R12 & Costo, rendimiento \\
+RDS PostgreSQL 16 db.t3.micro, single-AZ & PostgreSQL en la EC2; Multi-AZ & R2, R11, RF-14 & Fiabilidad, costo, seguridad operativa \\
+S3 (raw, curated, resultados de Athena) & Datos en RDS o en disco de la EC2 & R4, R6 & Costo, sostenibilidad, durabilidad \\
+EMR (clúster efímero, m4.large) & Glue job; Athena CTAS; EMR Serverless & R4, R10, R11 & Costo, excelencia operativa \\
+Glue Data Catalog & Crawler o \texttt{MSCK REPAIR TABLE} & R5 & Excelencia operativa, costo \\
+Athena (workgroup \texttt{primary}) & Redshift; consultar RDS & R6, R7, R9 & Costo (pago por consulta), rendimiento \\
+SSM Parameter Store & Variables en el código o en la imagen & Parcial 1 (credenciales) & Seguridad \\
+nginx (en la EC2) & S3 con CloudFront & R8, R9, R11 & Costo, simplicidad \\
+Elastic IP & IP pública que cambia & Operación de la calificación & Fiabilidad, costo \\
+\bottomrule
+\end{tabular}
+\caption{Servicios, alternativas y trazabilidad. Redshift, Serverless y el balanceador se descartaron por costo o por no ser necesarios; no se desplegaron para compararlos.}
+\end{table}
+
+%=====================================================================
+\section{Proyección de costos}
+\label{sec:costos}
+\trazo{Requisitos: R11, R12}{Pilares: optimización de costos, sostenibilidad}
+\paragraph{Supuestos} (de \texttt{cost\_projection.yaml}). Despliegue 24/7 con 730 horas al mes en us-east-1, precios on-demand de \texttt{pricing.yaml}. Unos 50 usuarios, unas 2.000 peticiones al día a la API y unas 50 consultas al día al panel. Datos: unos 100~MB de CSV y unos 20~MB de Parquet. Una corrida de EMR al mes, con 3 nodos m4.large durante media hora. Sin NAT, balanceador ni Multi-AZ.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{L{1.6cm} L{9.6cm} R{2cm}}
+\toprule
+\textbf{Servicio} & \textbf{Detalle} & \textbf{US\$/mes} \\
+\midrule
+RDS & db.t3.micro single-AZ, 730 h $\times$ 0,017 = 12,41, más 20 GB gp3 = 2,30 & 14,71 \\
+EC2 & t3.small, 730 h $\times$ 0,0208 = 15,18, más EBS gp3 de 8 GB = 0,64 & 15,82 \\
+EC2 & IPv4 pública fija (Elastic IP), 730 h $\times$ 0,005 & 3,65 \\
+S3 & Unos 120~MB (raw, Parquet, resultados de Athena) y solicitudes & 0,10 \\
+Athena & Unas 3.000 consultas al mes, mínimo 10~MB cada una (unos 30 GB facturables) & 0,15 \\
+EMR & 1 corrida al mes, 3 $\times$ m4.large, 12 horas normalizadas $\times$ 0,03, más arranque & 0,40 \\
+Glue & Data Catalog dentro de la capa gratuita & 0,00 \\
+\midrule
+\multicolumn{2}{r}{\textbf{Total declarado}} & \textbf{34,83} \\
+\bottomrule
+\end{tabular}
+\caption{Líneas de \texttt{cost\_projection.yaml}. El archivo no trae total, el harness lo calcula.}
+\end{table}
+
+El total de US\$34,83 está bajo el tope de US\$50. RDS y EC2 suman casi todo el costo (US\$34,18 de 34,83) y no dependen del volumen de datos analíticos, porque el panel no pasa por ellos. Ahorramos al no usar balanceador (unos US\$16 al mes), NAT ni Multi-AZ, y al pagar EMR solo durante la corrida.
+
+\paragraph{Qué pasa con ×10 en datos.} Con 20~M de filas el Parquet sería de unos 200~MB y el S3 seguiría costando centavos (menos de US\$1). La partición por mes mantiene lo que Athena escanea por consulta de un mes en unos 3~MB, que sigue cerca del mínimo facturable de 10~MB. Lo que sí crece es EMR: si el tiempo de la corrida creciera de forma lineal, pasaría de 0,5~h a unas 5~h y el costo de unos US\$0,40 a unos US\$4. Con eso el total subiría a unos US\$38, todavía bajo US\$50. El tope de 150 horas normalizadas de R10 se sobrepasaría con una corrida de más de unas 12 horas con el mismo clúster, así que habría que ampliar los nodos o procesar por incrementos mensuales. Estas cifras son estimaciones del equipo, no mediciones.
+
+\paragraph{Qué pasa con ×10 en consultas.} Serían unas 30.000 consultas al mes. Con el mínimo de 10~MB, unos 300~GB facturables, Athena costaría unos US\$1,50 al mes (hoy 0,15). El caché de 10 minutos reduce este valor porque las consultas repetidas del mismo par no vuelven a Athena. Las 20.000 peticiones al día a la API siguen en una t3.small si mantienen la latencia que medimos (p95 de 0,077~s con 20 clientes), pero eso no está probado a ese volumen. El total subiría a unos US\$36.
+
+\paragraph{Sostenibilidad.} Menos bytes leídos es menos cómputo y menos energía. Parquet más partición reducen los bytes escaneados, el clúster de EMR existe solo 10 a 15 minutos por corrida en vez de estar siempre encendido, y no hay recursos inactivos duplicados (NAT, segunda zona). Cuando el volumen crezca, el ahorro aumenta, porque el costo analítico depende de los bytes que se lean y no del tamaño total del lago.
+
+%=====================================================================
+\section{Resultados del harness}
+\label{sec:harness}
+El \texttt{report.md} final (copia en \texttt{evidence/p2/report.md}) da \textbf{70,0 de 70,0} puntos. Todos los requisitos pasaron.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.9cm} L{4.6cm} C{1.3cm} L{7.2cm}}
+\toprule
+\textbf{Req.} & \textbf{Criterio} & \textbf{Puntos} & \textbf{Evidencia del reporte} \\
+\midrule
+R1 & Latencia de búsqueda & 4/4 & 100 peticiones, 20 clientes: p50 0,032~s, p95 0,077~s \\
+R2 & Sin sobreventa & 10/10 & 5 rondas de 50: 1 respuesta 201 y 49 respuestas 409; con K=3: 3 respuestas 201; sin 5xx \\
+R3 & Consulta de reserva & 3/3 & 200 si existe, 404 si no \\
+R4 & EMR produce Parquet & 8/8 & 2 corridas COMPLETED; 24 de 24 archivos escritos dentro de una corrida; 2.000.542 filas, igual que el oráculo \\
+R5 & Tablas en Glue & 6/6 & Contrato de ambas tablas y \emph{partition projection} activa \\
+R6 & Correctitud y poda & 8/8 & Top 10 igual al oráculo; consulta de un mes escaneó 308.482~B, límite 1.623.227~B \\
+R7 & Endpoint con Athena & 8/8 & 5 pares entre 0,80 y 1,41~s; 8 consultas en el historial de Athena \\
+R8 & Flujo del cliente & 6/6 & La interfaz creó la reserva IC9K32 y el backend la devolvió \\
+R9 & Panel igual al endpoint & 4/4 & CLO-MDE 2024-08: panel, endpoint y valor esperado 0,6096 \\
+R10 & Sin EMR encendido & 5/5 & 0 clústeres activos; 24,0 horas normalizadas (tope 150) \\
+R11 & Arquitectura simple & 4/4 & 7 servicios facturables; instancias permitidas; sin NAT ni Multi-AZ \\
+R12 & Proyección de costos & 4/4 & Declarado 31,18; estimado en vivo 28,31 \\
+\bottomrule
+\end{tabular}
+\caption{Resultado por requisito.}
+\end{table}
+
+Además de la corrida del harness, verificamos Athena contra el oráculo de la semilla 2682 (archivo \texttt{verificacion\_analytics.txt} en \texttt{evidence/p2/}). Coincidieron exactamente el conteo de filas (2.000.542), el ingreso CONFIRMED de 2023-01 (2.064.557.404), 2024-01 (2.072.070.154) y 2024-12 (1.983.343.325), y el conteo de 2024-01 (83.506). El top 10 por ocupación coincide en orden y valor, con CUC-BAQ (0,8792) y CUC-BGA (0,8529) a la cabeza.
+
+\paragraph{Cosas que no fallaron pero hay que decir.}
+\begin{itemize}
+  \item \textbf{Dónde se corrió.} El harness se ejecutó desde la EC2 con URLs \texttt{localhost}, por la razón explicada en el resumen. Para la corrida del profesor, el \texttt{config.yaml} apunta a \texttt{http://18.208.1.79:8000} y \texttt{:3000}, y los puertos se abren con el script de calificación.
+  \item \textbf{Parte no verificada.} En R11 el reporte avisa que no pudo inspeccionar CloudFront, y no lo contó. Nosotros no usamos CloudFront.
+  \item \textbf{Proyección de R12.} El \texttt{report.md} se generó con un total declarado de US\$31,18, antes de agregar la IP elástica. El archivo actual declara US\$34,83. La diferencia con lo estimado en vivo (28,31) es de US\$6,52, que es menos del 25\,\% de 28,31 (7,08), así que sigue dentro de la tolerancia. Conviene volver a correr el harness antes de la ventana de calificación para tener un reporte con la proyección final.
+  \item \textbf{Lambda.} Los 7 servicios facturables de R11 incluyen Lambda, que es del laboratorio y no del proyecto. Los del proyecto son 6.
+\end{itemize}
+
+\paragraph{Cómo reproducirlo.} Los pasos están en el repositorio y se ejecutan en AWS, no en local.
+\begin{lstlisting}
+bash emr/run_emr.sh sample    # raw-sample/ -> curated-sample/
+bash emr/run_emr.sh full      # raw/ -> curated/ (sobrescribe)
+bash emr/create_tables.sh     # DDL de athena_tables.sql en Glue
+pytest                        # harness: report.json y report.md
+bash infra/abrir_calificacion.sh    # abre 8000 y 3000 (ventana)
+bash infra/cerrar_calificacion.sh   # los cierra
+\end{lstlisting}
+
+%=====================================================================
+\section{Trazabilidad con los requisitos}
+\begin{table}[H]
+\centering
+\begin{tabular}{C{1.2cm} L{6.0cm} L{7.2cm}}
+\toprule
+\textbf{Req.} & \textbf{Decisión que lo sostiene} & \textbf{Sección} \\
+\midrule
+R1, R3 & EC2 t3.small con API y RDS & 3.1 \\
+R2 & \texttt{UPDATE} condicional en PostgreSQL, separación de cargas & 3.1, 3.5 \\
+R4, R10 & EMR efímero con \texttt{--auto-terminate}, muestra del 5\,\% primero & 3.2 \\
+R5 & Glue Data Catalog con \emph{partition projection} & 3.3 \\
+R6 & Parquet y partición por mes & 3.3 \\
+R7, R9 & Endpoint con Athena parametrizado, caché tras la primera consulta & 3.4 \\
+R8 & Frontend estático con nginx en la misma EC2 & 3.1 \\
+R11 & Sin NAT, sin balanceador, single-AZ, instancias pequeñas & 3.1, 4 \\
+R12 & \texttt{cost\_projection.yaml} y su narrativa & 5 \\
+\bottomrule
+\end{tabular}
+\caption{De cada requisito a la decisión que lo cubre.}
+\end{table}
+
+%=====================================================================
+\section{Riesgos y mejoras pendientes}
+\begin{itemize}
+  \item \textbf{Sin autenticación en \texttt{/admin/flights} ni en el panel.} El contrato lo exige así para el harness. Por eso los puertos solo se abren en la ventana de calificación. En producción irían detrás de HTTPS y autenticación.
+  \item \textbf{Single-AZ.} Una caída de la zona deja el sistema fuera. Multi-AZ está prohibido por R11 y lo aceptamos.
+  \item \textbf{Caché por proceso.} Cada worker tiene su propio caché y no se invalida cuando EMR vuelve a correr. Con TTL de 10 minutos el desfase es corto. En producción se usaría un caché compartido o invalidación al terminar el job.
+  \item \textbf{Rango de \emph{partition projection}.} Está fijo en 2023-01 a 2024-12. Si llegan más meses hay que ampliarlo.
+  \item \textbf{Refresco.} La corrida de EMR es manual. Un orquestador programado sería el siguiente paso.
+\end{itemize}
+
+%=====================================================================
+\appendix
+\section{Bitácora de prompts}
+Usamos Claude Code como orquestador, que a su vez delegó tareas en agentes (infraestructura, job de EMR, endpoint y frontend, documento). Esta tabla resume los pedidos que dimos y qué decisión provocaron. Son resúmenes, no transcripciones.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6cm} L{6.6cm} L{6.0cm}}
+\toprule
+\textbf{N.º} & \textbf{Prompt (resumen)} & \textbf{Efecto en el proyecto} \\
+\midrule
+1 & Pedir un plan antes de ejecutar nada. & Se escribió \texttt{SPEC\_P2.md} con infraestructura, capas de S3 y reglas, antes de crear recursos. \\
+2 & Usar la semilla 2682 y delegar el trabajo en agentes Sonnet. & Se generaron los datos con esa semilla y el trabajo se repartió: EMR y Athena, endpoint y frontend, documento. \\
+3 & No dar nada por bueno sin compararlo con el oráculo. & Se escribió \texttt{verificacion\_analytics.txt}; conteos, ingresos y top 10 coinciden exactamente. \\
+4 & Probar EMR primero con una muestra del 5\,\% para cuidar el presupuesto. & Primera corrida sobre \texttt{raw-sample/}; solo después la corrida completa. Total de 24 horas normalizadas. \\
+5 & Decidir qué hacer con \texttt{bookings}, porque el contrato y el oráculo se contradicen. & Se siguió al oráculo (CONFIRMED más CANCELLED) y se declaró aquí. \\
+6 & No abrir puertos a internet salvo en la ventana de calificación, porque \texttt{/admin/flights} no tiene autenticación. & Scripts \texttt{abrir\_calificacion.sh} y \texttt{cerrar\_calificacion.sh}; la base nunca se abre. \\
+7 & Redactar este documento corto y directo, por la retroalimentación del parcial 1. & Documento de menos de 20 páginas con cada decisión ligada a un requisito. \\
+8 & [Completar] & [Completar] \\
+9 & [Completar] & [Completar] \\
+\bottomrule
+\end{tabular}
+\caption{Bitácora de prompts.}
+\end{table}
+\end{document}
