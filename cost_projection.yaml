@@ -9,6 +9,7 @@ assumptions: >-
 line_items:
   - {service: "RDS", detail: "db.t3.micro single-AZ 730 h x 0.017 = 12.41 + 20 GB gp3 x 0.115 = 2.30", monthly_usd: 14.71}
   - {service: "EC2", detail: "t3.small 730 h x 0.0208 = 15.18 + EBS gp3 8 GB = 0.64 (API + frontend nginx)", monthly_usd: 15.82}
+  - {service: "EC2", detail: "IPv4 publica fija (Elastic IP) asociada a la instancia: 730 h x 0.005", monthly_usd: 3.65}
   - {service: "S3", detail: "~120 MB (raw 100 MB + parquet 20 MB + logs/resultados Athena) y requests", monthly_usd: 0.10}
   - {service: "Athena", detail: "~3.000 consultas/mes sobre route_month_metrics (<1 MB cada una, minimo 10 MB) = ~30 GB-equiv. 0.15 USD", monthly_usd: 0.15}
   - {service: "EMR", detail: "1 corrida/mes, 3 x m4.large, 0.5 h = 6 h-instancia = 12 horas normalizadas x 0.03 + overhead arranque", monthly_usd: 0.40}
