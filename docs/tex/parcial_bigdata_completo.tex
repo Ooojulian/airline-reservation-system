@@ -1,0 +1,1696 @@
+% =====================================================================
+%  Parcial - Big Data and Data Engineering
+%  Sistema de Reservas Aereas - Universidad Sergio Arboleda
+%  Compilar con: pdflatex parcial_bigdata.tex  (dos veces, por el TOC)
+%  Imagenes requeridas en el mismo directorio:
+%     Logo.png, diagrama-er.png, diagrama-arquitectura.png,
+%     diagrama-secuencia.png
+%  El codigo fuente Mermaid de los diagramas se versiona aparte, en
+%  diagramas/*.mmd, y no se incluye en este documento.
+% =====================================================================
+\documentclass[10pt,letterpaper]{article}
+
+% ---------- Codificacion e idioma ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-noquoting]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- Geometria ----------
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=2cm,right=2cm]{geometry}
+\usepackage{setspace}
+% \onehalfspacing   % descomentar para interlineado 1,5 (aumenta ~40% las paginas)
+
+% ---------- Tablas y graficos ----------
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{ragged2e}
+\usepackage{float}
+
+% ---------- Color y estilo ----------
+\usepackage{xcolor}
+\definecolor{usaAzul}{HTML}{003057}
+\definecolor{usaGris}{HTML}{5A6570}
+\definecolor{cajaFondo}{HTML}{F2F5F7}
+
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{1.8ex plus .2ex}{0.8ex}
+\titleformat{\section}{\large\bfseries\color{usaAzul}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{usaAzul}}{\thesubsection}{0.7em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{usaGris}}{\thesubsubsection}{0.6em}{}
+
+\usepackage[most]{tcolorbox}
+\usepackage{enumitem}
+\setlist{noitemsep,topsep=3pt}
+
+% ---------- Encabezados ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\color{usaGris} Sistema de Reservas Aéreas --- Big Data}
+\fancyhead[R]{\footnotesize\color{usaGris} Cristancho \& Urrego}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---------- Codigo fuente (para los listados de la Seccion 16) ----------
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{usaGris},
+  backgroundcolor=\color{cajaFondo},
+  captionpos=b,
+  showstringspaces=false
+}
+
+% ---------- Hipervinculos (siempre al final) ----------
+\usepackage[hidelinks,colorlinks=true,linkcolor=usaAzul,urlcolor=usaAzul,citecolor=usaAzul]{hyperref}
+
+% ---------- Comandos propios ----------
+\newcommand{\restriccion}[1]{%
+  \begin{tcolorbox}[colback=yellow!12,colframe=orange!70!black,
+    title=\textbf{Restricción específica del equipo (Sección 3)},sharp corners=south]
+  #1
+  \end{tcolorbox}}
+
+\newcommand{\nota}[1]{%
+  \begin{tcolorbox}[colback=cajaFondo,colframe=usaAzul!60,sharp corners=south]#1\end{tcolorbox}}
+
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4pt}
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash\footnotesize}p{#1}}
+\newcolumntype{C}[1]{>{\Centering\arraybackslash\footnotesize}p{#1}}
+\newcolumntype{R}[1]{>{\RaggedLeft\arraybackslash\footnotesize}p{#1}}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,fit,positioning}
+
+% =====================================================================
+\begin{document}
+
+% =========================== PORTADA =================================
+\begin{titlepage}
+\centering
+\vspace*{0.5cm}
+
+\IfFileExists{Logo.png}{%
+  \includegraphics[width=0.42\textwidth]{Logo.png}%
+}{%
+  \IfFileExists{logo-usa.pdf}{%
+    \includegraphics[width=0.42\textwidth]{logo-usa.pdf}%
+  }{%
+    \fbox{\parbox[c][3.2cm][c]{0.42\textwidth}{\centering\color{usaGris}\small
+      [ Reemplazar por \texttt{Logo.png} \\ en el mismo directorio del \texttt{.tex} ]}}%
+  }%
+}
+
+\vspace{1.0cm}
+{\Large\scshape\color{usaAzul} Universidad Sergio Arboleda\par}
+\vspace{0.35cm}
+{\large Escuela de Ingeniería y Ciencias Exactas\par}
+\vspace{0.15cm}
+{\large Programa de Ciencias de la Computación e Inteligencia Artificial\par}
+
+\vspace{1.4cm}
+{\color{usaAzul}\rule{\textwidth}{1.2pt}}
+\vspace{0.7cm}
+
+{\Huge\bfseries Sistema de Reservas Aéreas\par}
+\vspace{0.5cm}
+{\LARGE Requisitos, Modelo de Datos y Arquitectura\par}
+\vspace{0.35cm}
+{\large\itshape Aerolínea regional con hub en el Aeropuerto Internacional El Dorado (BOG)\par}
+
+\vspace{0.7cm}
+{\color{usaAzul}\rule{\textwidth}{1.2pt}}
+
+\vspace{1.6cm}
+{\large\bfseries Examen Parcial\par}
+\vspace{0.2cm}
+{\large Big Data and Data Engineering\par}
+
+\vspace{1.6cm}
+{\large\bfseries Autores\par}
+\vspace{0.3cm}
+{\large Julian Cristancho \par}
+\vspace{0.15cm}
+{\large Andrés Urrego \par}
+
+\vfill
+{\large Bogotá D.C., Colombia\par}
+{\large \today\par}
+\end{titlepage}
+
+% =========================== INDICE ==================================
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{Contexto del sistema}
+
+\subsection{Descripción general}
+Una aerolínea regional con centro de operaciones (\emph{hub}) en el Aeropuerto Internacional El Dorado (IATA: BOG, ICAO: SKBO) contrata al equipo para construir desde cero su sistema de reservas de vuelos. La aerolínea opera una red de rutas domésticas dentro de Colombia y rutas internacionales de corto y medio radio hacia destinos de la región andina, Centroamérica y el Caribe. La totalidad de sus itinerarios con escala se conectan a través de BOG bajo un modelo \emph{hub-and-spoke}.
+
+La venta se realiza por dos canales: el sitio web propio (canal directo, orientado al pasajero final) y agencias de viaje aliadas que consumen una API B2B dedicada. El sistema debe soportar la operación transaccional (búsqueda, reserva, pago, cancelación) y, simultáneamente, alimentar una plataforma analítica que permita al área comercial estudiar la ocupación por ruta, los ingresos por tarifa y los patrones de cancelación.
+
+\subsection{Problema central de diseño}
+El enunciado establece dos condiciones sin cuantificar: que el sistema \textbf{no debe vender más sillas de las que la aeronave tiene} y que \textbf{el tráfico presenta picos en temporada alta}. Ambas condiciones convergen en el mismo punto de tensión arquitectónica: el control de concurrencia sobre un recurso finito y disputado (el inventario de asientos de una instancia de vuelo) bajo carga variable y no uniforme.
+
+El equipo adopta la primera condición en su lectura literal y estricta: \textbf{no se autoriza sobreventa de ningún tipo}. Esta decisión, formalizada en SUP-20, tiene una consecuencia que atraviesa todo el documento: el sistema pierde el margen que en la práctica aeronáutica absorbe los errores de concurrencia, de modo que cualquier defecto en el control del inventario se manifiesta de forma inmediata y visible como una denegación de embarque.
+
+Todo el documento se articula alrededor de esa tensión. Cada decisión de modelado, de arquitectura de \emph{backend} y de infraestructura se justifica por su relación con el invariante de inventario o con el perfil de carga.
+
+\subsection{Estructura del documento y trazabilidad}
+Los elementos del documento se identifican con prefijos que permiten referenciarlos de forma cruzada:
+\begin{itemize}
+  \item \textbf{SUP-xx}: supuesto asumido por el equipo (Sección~\ref{sec:supuestos}).
+  \item \textbf{EXC-xx}: exclusión explícita de alcance (Sección~\ref{sec:exclusiones}).
+  \item \textbf{ACT-xx}: actor del sistema (Sección~\ref{sec:actores}).
+  \item \textbf{RN-xx}: regla de negocio (Sección~\ref{sec:reglas}).
+  \item \textbf{D-xx}: desnormalización deliberada (Sección~\ref{sec:desnorm}).
+  \item \textbf{RF-xx}: requisito funcional (Sección~\ref{sec:rf}).
+  \item \textbf{RNF-xx}: requisito no funcional (Sección~\ref{sec:rnf}).
+\end{itemize}
+
+Toda decisión de arquitectura debe poder rastrearse hasta al menos un elemento de esta lista. Un supuesto no declarado es una decisión de arquitectura oculta.
+
+Los identificadores son \textbf{estables}: una vez asignados no se reutilizan ni se renumeran, de modo que las referencias cruzadas permanecen válidas entre versiones del documento. En consecuencia, los elementos incorporados en revisiones posteriores aparecen con el siguiente número libre y no en posición correlativa dentro de su tabla. La ausencia de orden numérico estricto es intencional.
+
+\restriccion{Pendiente de integración. Este bloque contiene la restricción adicional entregada de forma confidencial al equipo según la Sección 3 del enunciado, y su análisis de impacto sobre requisitos, modelo de datos y arquitectura.}
+
+% =====================================================================
+\section{Alcance del sistema}
+
+\subsection{Dentro del alcance}
+\begin{enumerate}
+  \item Búsqueda de disponibilidad de vuelos directos y con una escala.
+  \item Cotización tarifaria con desglose de tarifa base, impuestos y tasas.
+  \item Creación de reservas atómicas mono y multi-trayecto, de ida o de ida y vuelta.
+  \item Bloqueo temporal de inventario durante el proceso de pago.
+  \item Integración con pasarela de pago externa (\emph{payment gateway}).
+  \item Emisión y consulta de reservas, tiquetes y cupones.
+  \item \emph{Check-in} y asignación de asiento físico.
+  \item Cancelación, retracto y desistimiento con cálculo porcentual de reembolso.
+  \item Reprogramación de fecha sujeta a reglas tarifarias.
+  \item API B2B diferenciada para agencias de viaje aliadas, con comisión y línea de crédito.
+  \item Registro auditable e inmutable del ciclo de vida de cada reserva.
+  \item Proceso ETL hacia una base analítica (OLAP) y catálogo de metadatos.
+\end{enumerate}
+
+\subsection{Fuera del alcance}
+\label{sec:exclusiones}
+Las siguientes funcionalidades se excluyen deliberadamente. La exclusión no implica que sean irrelevantes para una aerolínea real, sino que su inclusión no aporta a la discusión de concurrencia, modelado e ingeniería de datos que el ejercicio evalúa.
+
+\begin{longtable}{@{}L{1.6cm} L{5.2cm} L{8.6cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Exclusión} & \textbf{Justificación} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Exclusión} & \textbf{Justificación} \\
+\midrule
+\endhead
+EXC-01 & Programa de viajero frecuente y niveles de lealtad & Es un subsistema de acumulación y redención con su propio modelo contable. No afecta el invariante de inventario. Se deja como punto de extensión mediante el campo \texttt{passenger.loyalty\_id} sin lógica asociada. \\
+EXC-02 & Gestión de tripulación, rotaciones y licencias & Pertenece al dominio de \emph{Crew Management}, con normativa horaria propia (RAC 121). Sistema independiente. \textbf{Punto de extensión declarado:} la instancia de vuelo ya referencia una matrícula concreta, de modo que una tabla de asignación de tripulación colgaría de \texttt{flight\_instance} sin alterar ninguna entidad existente. \\
+EXC-03 & Operaciones de tierra: limpieza, catering, reabastecimiento de combustible, \emph{pushback} & Dominio de \emph{Ground Handling}. Solo se consume el resultado agregado (tiempo mínimo de conexión) como parámetro estático. \\
+EXC-04 & Equipaje: piezas incluidas, exceso, equipaje especial, pesaje & Genera un modelo de servicios complementarios y un flujo de cobro paralelo. No incide sobre la disputa de asientos. \textbf{Punto de extensión declarado:} se modelaría como servicio complementario asociado al cupón, que ya porta el precio desagregado. Se advierte que introduciría un segundo recurso finito por vuelo --- la capacidad de bodega --- y con él un tercer invariante de concurrencia que habría que demostrar. \\
+EXC-05 & Transporte de mascotas (PETC/AVIH) & Requiere cupos por bodega y por cabina, documentación sanitaria y reglas por país. Complejidad ortogonal al problema central. \\
+EXC-06 & Asistencia especial (PRM, mujeres gestantes, menores no acompañados) & Se modela únicamente como punto de extensión \texttt{special\_service\_request} sin lógica de cupo ni de validación. \\
+EXC-07 & Irregularidades operacionales (IROPS): cancelaciones por meteorología, reacomodo masivo, mantenimiento no programado & Requiere un motor de \emph{re-accommodation} completo. Se modela solo el estado terminal resultante. \\
+EXC-08 & Códigos compartidos, interlínea y distribución vía GDS (Amadeus, Sabre, Travelport) & Introduce mensajería EDIFACT/NDC y liquidación IATA BSP. La integración de agencias se resuelve con API REST propietaria. \\
+EXC-09 & Peso y balance de la aeronave (\emph{weight \& balance}) & Restricción operacional de seguridad; en el modelo se aproxima como capacidad fija por cabina. \\
+EXC-10 & \emph{Revenue management} dinámico con predicción de demanda & Los precios se derivan de cupos tarifarios y ventanas de anticipación definidos por el área comercial, no de un modelo predictivo en tiempo real. \\
+EXC-11 & Transmisión del manifiesto de pasajeros a autoridades migratorias en rutas internacionales & Es una obligación legal real y una transferencia de datos personales a un tercero, pero constituye una integración con sistemas estatales cuya complejidad es ajena al problema de concurrencia e ingeniería de datos que evalúa el ejercicio. Se excluye de forma explícita y no por omisión: el modelo conserva los campos de documento de identidad y nacionalidad que dicha transmisión requeriría. \\
+\bottomrule
+\caption{Exclusiones explícitas de alcance.}
+\end{longtable}
+
+% =====================================================================
+\section{Actores del sistema}
+\label{sec:actores}
+Todos los actores operan sobre el mismo \emph{backend}, pero a través de interfaces distintas. Esta separación es una decisión de diseño, no un accidente: permite aplicar políticas de autenticación, límites de tasa y esquemas de liquidación diferenciados sin duplicar la lógica de inventario.
+
+\begin{longtable}{@{}L{1.8cm} L{3.6cm} L{4.4cm} L{5.4cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Actor} & \textbf{Interfaz} & \textbf{Responsabilidad principal} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Actor} & \textbf{Interfaz} & \textbf{Responsabilidad principal} \\
+\midrule
+\endhead
+ACT-01 & Pasajero (usuario final) & Web pública / móvil & Buscar, reservar, pagar, consultar, cancelar y hacer \emph{check-in}. \\
+ACT-02 & Agente de agencia aliada & API B2B autenticada & Reservar y emitir en nombre de terceros bajo esquema de comisión y línea de crédito. \\
+ACT-03 & Personal de aeropuerto (\emph{counter} / puerta) & Consola interna & Consultar reservas, gestionar \emph{check-in} asistido y confirmar embarque. \\
+ACT-04 & Administrador comercial & Consola interna & Definir rutas, programaciones, cupos tarifarios y ventanas de anticipación. \\
+ACT-05 & Analista de datos & Base analítica / catálogo & Consultar los modelos OLAP para ocupación, ingresos y cancelaciones. \\
+ACT-06 & Pasarela de pago (sistema externo) & \emph{Webhook} / API & Autorizar, capturar y reversar transacciones; notificar resultado. \\
+ACT-07 & Proceso ETL programado (sistema) & Job de datos & Extraer, transformar y cargar hacia la base analítica. \\
+\bottomrule
+\caption{Actores del sistema.}
+\end{longtable}
+
+% =====================================================================
+\section{Supuestos asumidos}
+\label{sec:supuestos}
+
+\subsection{Flota y configuración de cabina}
+\begin{longtable}{@{}L{1.7cm} L{7.4cm} L{6.1cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endhead
+SUP-01 & La flota es homogénea en configuración lógica: toda aeronave tiene exactamente dos cabinas físicas, Económica y Premium, en proporción aproximada 80\,\%\,/\,20\,\% de la capacidad total. & La capacidad se modela por cabina, no por aeronave. El inventario y los cupos tarifarios se controlan siempre a nivel \texttt{(vuelo, cabina)}. \\
+SUP-02 & La configuración de cabina es un atributo del \emph{tipo} de aeronave, no de la matrícula individual, y no cambia entre vuelos. & Permite normalizar \texttt{aircraft\_type} y evitar el versionado del mapa de asientos. \\
+SUP-03 & El mapa de asientos (fila, letra, cabina) es estático por tipo de aeronave. & La tabla \texttt{seat} es catálogo de referencia; no participa en la ruta crítica de la reserva. \\
+\bottomrule
+\caption{Supuestos sobre flota y cabina.}
+\end{longtable}
+
+\subsection{Red de rutas y operación}
+\begin{longtable}{@{}L{1.7cm} L{7.4cm} L{6.1cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endhead
+SUP-04 & La aerolínea opera rutas nacionales (dentro de Colombia) e internacionales de corto y medio radio (menos de seis horas de vuelo) hacia la región. No opera rutas de largo radio. & Determina el régimen tributario, los plazos de retracto aplicables y la ausencia de reglas de cabina de largo radio. \\
+SUP-05 & Toda conexión ocurre en BOG (modelo \emph{hub-and-spoke}). Un trayecto tiene como máximo dos segmentos, es decir, una escala. & Acota la búsqueda de itinerarios a un \emph{join} de profundidad dos, evitando un algoritmo de grafos general. \\
+SUP-06 & El tiempo mínimo de conexión (MCT) en BOG es de 60 minutos para conexiones nacional--nacional y de 90 minutos cuando alguno de los segmentos es internacional. & Es un filtro duro en el motor de búsqueda de itinerarios y un parámetro configurable por par de tipos de segmento. \\
+SUP-07 & Existe una separación explícita entre \emph{vuelo programado} (ruta, hora local, días de operación, vigencia) e \emph{instancia de vuelo} (ejecución de ese programa en una fecha concreta). & Resuelve la pregunta del enunciado sobre vuelos recurrentes. El inventario cuelga de la instancia, nunca del programa. \\
+SUP-08 & Las instancias de vuelo se materializan en una ventana rodante de 361 días hacia el futuro. & Define el volumen de la tabla de inventario y la frecuencia del proceso de materialización. \\
+SUP-09 & Todas las marcas de tiempo se persisten en UTC (\texttt{TIMESTAMPTZ}) y cada aeropuerto declara su zona horaria IANA. Los horarios comerciales se presentan en hora local. & Colombia no aplica horario de verano, pero varios destinos regionales sí. Sin esto, el cálculo de conexiones y duraciones falla de forma estacional. \\
+SUP-53 & \textbf{BOG es el único aeropuerto de la red con función de \emph{hub}}; los destinos restantes son puntos terminales y no admiten conexión. & El motor de búsqueda evalúa un único pivote, lo que convierte la búsqueda con escala en un \emph{join} de profundidad dos con aeropuerto intermedio fijo, y permite que el MCT sea un parámetro y no una tabla por aeropuerto. Es además el argumento que sostiene la fórmula $S \times (S-1)$ de RNF-19. \\
+SUP-54 & Además del MCT mínimo existe un \textbf{MCT máximo} de 6 horas en conexiones nacional--nacional y 8 horas cuando alguno de los segmentos es internacional. & Una conexión de once horas es técnicamente válida y comercialmente inservible. Sin umbral superior, el motor ofertaría itinerarios que nadie compra y que degradan la percepción del resultado. \\
+SUP-55 & Si para un par origen--destino y fecha no existe vuelo directo ni combinación que cumpla ambos umbrales de MCT, el sistema devuelve un \textbf{resultado vacío con motivo explícito}, no un error, y propone fechas adyacentes. & Un conjunto vacío sin explicación es indistinguible de una falla del sistema y genera reintentos. La distinción entre ausencia de disponibilidad y fallo debe ser observable por el usuario. \\
+SUP-56 & Los horarios reales de salida y llegada se registran cuando ocurren. El MCT se valida \textbf{en el momento de la venta} contra los horarios programados; un retraso posterior que rompe una conexión se registra como evento del cupón, pero la decisión comercial de reacomodo queda fuera de alcance (EXC-07). & Delimita qué parte de la irregularidad operacional asume el sistema: conoce y registra el hecho, no adopta la decisión. Habilita el análisis de puntualidad y de conexiones perdidas sin construir un motor de reacomodo. \\
+SUP-10 & Una reserva puede contener un trayecto de ida y uno de regreso. Cada trayecto se identifica con un número de trayecto (\texttt{journey\_number}) y agrupa sus propios segmentos. & Sin este agrupamiento, el motor de conexiones intentaría enlazar el segmento de regreso con el de ida aplicándole el MCT. El MCT solo se evalúa entre segmentos del mismo trayecto. \\
+SUP-11 & El límite de una escala de SUP-05 aplica por trayecto y no por reserva: una reserva de ida y vuelta admite hasta cuatro segmentos. & Acota la búsqueda sin impedir el caso de venta más frecuente. \\
+\bottomrule
+\caption{Supuestos sobre red de rutas y operación.}
+\end{longtable}
+
+\subsection{Estructura tarifaria y moneda}
+\begin{longtable}{@{}L{1.7cm} L{7.4cm} L{6.1cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endhead
+SUP-12 & La cabina Económica se comercializa en cuatro clases tarifarias --- XS, S, M, L --- ordenadas de menor a mayor precio y de menor a mayor flexibilidad. La cabina Premium se comercializa con una única clase tarifaria (PR). & Cinco clases tarifarias en total. Cada una es un \emph{bucket} de inventario, no una simple etiqueta de precio. \\
+SUP-13 & Cada clase tarifaria tiene un cupo autorizado definido por el área comercial. La suma de cupos de las clases de una cabina no puede exceder la capacidad física de esa cabina. & Primer mecanismo de variación de precio: al agotarse las clases baratas, el precio ofertado sube por desplazamiento de \emph{bucket}. \\
+SUP-14 & Cada clase tarifaria tiene además una \textbf{ventana de anticipación} (Sección~\ref{sec:ventanas}): deja de ser ofertable cuando la fecha de salida se acerca por debajo de su umbral, aunque le quede cupo disponible. & Segundo mecanismo, y el que implementa literalmente la regla del enunciado sobre tarifas dependientes de la anticipación de compra. La clase ofertada es la más barata que satisfaga cupo \emph{y} ventana. \\
+SUP-15 & Las clases XS y S se clasifican como \textbf{tarifas promocionales}; M, L y PR como tarifas no promocionales. & Esta clasificación es la que habilita legalmente el reembolso reducido de XS y S, según el régimen de desistimiento del RAC~3 (Sección~\ref{sec:regulacion}). \\
+SUP-16 & Toda venta se procesa, cotiza, cobra y almacena en pesos colombianos (COP), como entero en unidades enteras de peso, sin fracción decimal. & Evita errores de redondeo de punto flotante. Tipo \texttt{BIGINT} en la base de datos. \\
+SUP-17 & Si una agencia aliada cotiza en moneda distinta, la conversión se realiza en el canal de la agencia y el sistema persiste el monto en COP junto con la tasa de cambio aplicada y su marca de tiempo. & Requisito de auditabilidad: sin la tasa congelada al momento del pago no se puede reconstruir el ingreso reportado. \\
+SUP-18 & El precio total se descompone en tres componentes independientes: tarifa base, impuestos (IVA 19\,\% en vuelos nacionales; exento en internacionales) y tasas (tasa aeroportuaria, tarifa administrativa). & Indispensable: las penalidades regulatorias de desistimiento se calculan sobre la tarifa base y excluyen impuestos y tasas. \\
+\bottomrule
+\caption{Supuestos sobre estructura tarifaria y moneda.}
+\end{longtable}
+
+\subsection{Inventario y asignación de asientos}
+\begin{longtable}{@{}L{1.7cm} L{7.4cm} L{6.1cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endhead
+SUP-19 & La unidad de inventario disputada es un \textbf{cupo} en la tupla \texttt{(instancia\_de\_vuelo, cabina)}, no un asiento físico identificado. & Reduce el punto de contención a una sola fila por vuelo y cabina, en lugar de a $N$ filas de asientos. Es la decisión que hace viable el bloqueo pesimista. \\
+SUP-20 & \textbf{No se autoriza sobreventa de ningún tipo.} El invariante de inventario es estricto: $\texttt{vendidos} + \texttt{bloqueados} \le \texttt{capacidad\_cabina}$, verificado de forma atómica en cada transacción. & Cumplimiento literal de la regla del enunciado. Elimina del alcance la denegación de embarque y su compensación regulatoria, y suprime el margen que absorbería un defecto de concurrencia. \\
+SUP-21 & El pasajero que no se presenta (\emph{no-show}) libera su cupo únicamente tras el cierre del vuelo; el asiento no se revende. & Consecuencia directa de SUP-20: sin sobreventa no existe recuperación comercial del asiento perdido, y se acepta como costo de la política. \\
+SUP-22 & La asignación de asiento físico ocurre en el \emph{check-in} para las clases XS, S y M, disponible desde 24 horas antes de la salida programada. & El \emph{check-in} es un flujo separado, con contención propia y muy inferior a la de la venta. \\
+SUP-23 & Excepción a SUP-22: las clases \textbf{L y PR} asignan asiento físico en el momento de la compra. & Introduce una segunda tabla de contención (\texttt{seat\_assignment}) activa para la fracción de inventario de mayor valor. \\
+SUP-57 & Durante el \emph{check-in} el asiento seleccionado queda bloqueado \textbf{5 minutos}, ventana distinta de la de la compra. La corrección no descansa en ese bloqueo sino en la clave primaria de \texttt{seat\_assignment}, que impide a nivel de motor que dos cupones ocupen el mismo asiento. & La ventana se dimensiona por la duración de la tarea que protege: 15 minutos amparan un pago con redirección a un tercero, 5 minutos amparan una selección de asiento. El bloqueo es mejora de experiencia; la garantía es declarativa. \\
+\bottomrule
+\caption{Supuestos sobre inventario y asignación de asientos.}
+\end{longtable}
+
+\subsection{Flujo de reserva, pago y concurrencia}
+\begin{longtable}{@{}L{1.7cm} L{7.4cm} L{6.1cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endhead
+SUP-24 & Al iniciar el proceso de compra, el sistema realiza un \textbf{bloqueo temporal de 15 minutos sobre el cupo} --- no sobre un asiento --- en todos los segmentos del itinerario. & El bloqueo consume disponibilidad sin constituir venta, y por eso figura en el invariante de SUP-20. \\
+SUP-25 & Para las clases L y PR el bloqueo abarca además el asiento físico seleccionado, con la misma ventana de 15 minutos. & Coherencia con SUP-23: el asiento prometido en la compra debe estar protegido durante el pago. \\
+SUP-26 & El bloqueo expirado se libera de forma perezosa al evaluar disponibilidad y, adicionalmente, mediante un proceso de barrido periódico. & Evita depender exclusivamente de una tarea programada que, si falla, congelaría inventario vendible. \\
+SUP-27 & La reserva pasa a estado \texttt{CONFIRMADA} únicamente si la pasarela de pago retorna una autorización exitosa --- o si el débito de crédito de agencia prospera --- dentro de la ventana de bloqueo. & El pago es parte atómica de la confirmación, no un paso posterior opcional. \\
+SUP-28 & Un itinerario con escala es una \textbf{transacción estrictamente atómica}: el inventario de cada segmento se controla de forma independiente, pero si cualquiera falla se revierte la transacción completa. No se venden segmentos huérfanos. & Obliga a un orden determinístico de adquisición de bloqueos para evitar interbloqueo entre transacciones cruzadas. \\
+SUP-29 & Toda operación de escritura expuesta en la API acepta una clave de idempotencia; un reintento con la misma clave devuelve el resultado original. & Sin esto, el reintento automático de una agencia ante un \emph{timeout} genera doble venta. \\
+SUP-30 & La pasarela de pago es un proveedor externo con tokenización. El sistema nunca almacena el número de tarjeta; persiste únicamente el token, el identificador de transacción y el estado. & Reduce el alcance de cumplimiento PCI-DSS al nivel de autoevaluación SAQ-A. \\
+SUP-31 & La confirmación definitiva del pago se recibe por \emph{webhook} asíncrono, que puede llegar duplicado o fuera de orden; el consumidor es idempotente y descarta eventos obsoletos por marca de tiempo. & Es el modo de falla real de las pasarelas; asumir respuesta síncrona confiable sería un supuesto débil. \\
+\bottomrule
+\caption{Supuestos sobre reserva, pago y concurrencia.}
+\end{longtable}
+
+\subsection{Cancelación, cambios y auditoría}
+\begin{longtable}{@{}L{1.7cm} L{7.4cm} L{6.1cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endhead
+SUP-32 & Las condiciones de reembolso y cambio no se codifican en el programa: residen en una tabla de \textbf{reglas tarifarias} por clase, versionada temporalmente. & Permite que el área comercial modifique la política sin desplegar código, y hace explícita la trazabilidad regulatoria. \\
+SUP-33 & El reembolso es \textbf{porcentual sobre la tarifa base}, según la clase adquirida y el momento de la solicitud (Sección~\ref{sec:reembolso}). & Sustituye una regla binaria por una matriz de dos dimensiones (clase $\times$ ventana), que es la que el sistema evalúa al cancelar. \\
+SUP-34 & Sobre el porcentaje comercial prevalece siempre el mínimo regulatorio de desistimiento y retracto cuando el pasajero es elegible; el sistema aplica el mayor de ambos. & Convierte la política en una jerarquía de reglas con precedencia legal; sin ella, el sistema sería no conforme. \\
+SUP-35 & La reprogramación de fecha se modela como liberación del cupo original y adquisición de uno nuevo dentro de una única transacción atómica, más el cobro de la diferencia tarifaria y la penalidad. & Reutiliza el mecanismo de concurrencia de la reserva; no introduce una segunda ruta crítica. \\
+SUP-36 & Cada transición de estado de una reserva y cada cambio de estado de un cupón se registran como evento inmutable con marca de tiempo, actor y motivo. & Es simultáneamente el requisito de auditabilidad y la fuente primaria del análisis de patrones de cancelación. \\
+SUP-37 & La tabla de eventos es de solo anexado; nunca se actualiza ni se elimina una fila, y el estado vigente es una proyección derivada. & Habilita captura incremental de cambios hacia el OLAP sin CDC sobre el motor de base de datos. \\
+\bottomrule
+\caption{Supuestos sobre cancelación, cambios y auditoría.}
+\end{longtable}
+
+\subsection{Canal de agencias de viaje}
+\begin{longtable}{@{}L{1.7cm} L{7.4cm} L{6.1cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endhead
+SUP-38 & Las agencias aliadas consumen una API B2B separada de la del canal directo, aunque ambas invocan el mismo servicio de inventario. & Permite versionado, autenticación y límites de tasa independientes sin duplicar la lógica del invariante. \\
+SUP-39 & La agencia se autentica con credenciales de cliente (OAuth~2.0 \emph{client credentials}); el pasajero final, con sesión de usuario. & Dos esquemas de identidad y un único modelo de autorización basado en el rol del canal. \\
+SUP-40 & Cada reserva registra obligatoriamente su canal de origen (\texttt{DIRECTO} o \texttt{AGENCIA}) y, cuando aplica, el identificador de la agencia. & Dimensión analítica indispensable para atribuir ingresos y comisiones por canal. \\
+SUP-41 & La agencia recibe comisión porcentual sobre la tarifa base, configurable por agencia y clase y versionada temporalmente, liquidada mensualmente y sin alterar el precio pagado por el pasajero. & Separa precio de venta de ingreso neto de la aerolínea: son dos métricas distintas en el modelo analítico. \\
+SUP-42 & Las agencias no acceden a inventario privilegiado ni a cupos reservados; compiten por el mismo inventario que el canal directo. & Evita un segundo mecanismo de reserva de cupo y mantiene un único invariante. \\
+SUP-43 & Las agencias liquidan contra una \textbf{línea de crédito} rotativa con cupo asignado, no contra pasarela de pago transaccional. El débito ocurre dentro de la misma transacción que confirma la reserva. & Introduce un segundo modo de liquidación y un segundo recurso disputado con su propio invariante de concurrencia. \\
+SUP-44 & Invariante de crédito: $\texttt{saldo\_utilizado} + \texttt{monto\_reserva} \le \texttt{cupo\_asignado}$, verificado atómicamente. & Idéntico en naturaleza al invariante de inventario, y sujeto al mismo mecanismo de bloqueo. \\
+SUP-45 & Orden global de adquisición de bloqueos: primero los de inventario en orden ascendente de \texttt{flight\_instance\_id} y, en último lugar, el de crédito de la agencia. & Sin un orden total y determinístico sobre dos familias de recursos, dos reservas cruzadas producen interbloqueo. \\
+\bottomrule
+\caption{Supuestos sobre el canal de agencias.}
+\end{longtable}
+
+\subsection{Datos y plataforma analítica}
+\begin{longtable}{@{}L{1.7cm} L{7.4cm} L{6.1cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Supuesto} & \textbf{Impacto en el diseño} \\
+\midrule
+\endhead
+SUP-46 & El sistema transaccional (OLTP) y la plataforma analítica (OLAP) son bases de datos físicamente separadas. Ninguna consulta analítica se ejecuta contra el OLTP. & Protege la latencia de la ruta crítica de reserva frente a escaneos completos del área comercial. \\
+SUP-47 & El OLTP se modela en tercera forma normal, con desnormalizaciones declaradas; el OLAP, en esquema en estrella. & Responde a la pregunta del enunciado sobre el nivel de normalización justificado para cada propósito. \\
+SUP-48 & Las tres preguntas de negocio se formalizan como: \emph{ocupación por ruta} = pasajeros embarcados sobre capacidad, por instancia de vuelo, agregable por ruta y periodo; \emph{ingresos por tarifa} = suma de tarifa base neta de comisión por clase; \emph{patrones de cancelación} = distribución del intervalo entre confirmación y cancelación, segmentada por clase, canal y ruta. & Sin métricas formalizadas el esquema en estrella no es justificable: cada una determina un hecho y su granularidad. \\
+SUP-49 & La latencia analítica aceptable es de hasta una hora; el área comercial no requiere tiempo real. & Habilita ETL por micro-lotes en lugar de \emph{streaming}, con impacto directo en el costo de infraestructura. \\
+SUP-50 & Los datos personales se tratan bajo la Ley 1581 de 2012 y su decreto reglamentario; la copia analítica contiene identificadores seudonimizados. & Restringe qué columnas transporta el ETL y obliga a una etapa de transformación, no a una copia idéntica. \\
+SUP-51 & Los cambios de estado de un cupón no se capturan por marca de agua sobre el registro de eventos, sino mediante \textbf{recarga completa de la partición} correspondiente a las instancias de vuelo con salida en las últimas 48 horas. & El cupón es una entidad mutable cuyo estado cambia con el \emph{check-in}, el vuelo o la cancelación parcial. Sin esta recarga, el factor de ocupación quedaría calculado de forma permanente sobre cupones en estado emitido. Se detalla en la Sección~\ref{sec:backend}. \\
+SUP-52 & El ingreso medio por pasajero transportado se asume en \$450.000~COP, tomado como orden de magnitud representativo del mercado regional colombiano. & Es la base de la derivación económica del objetivo de disponibilidad (RNF-10). Se declara como supuesto para que la cifra resultante sea auditable y sustituible. \\
+\bottomrule
+\caption{Supuestos sobre datos y plataforma analítica.}
+\end{longtable}
+
+% =====================================================================
+\section{Estructura de la reserva}
+\label{sec:reserva}
+
+El enunciado pregunta si un itinerario multi-trayecto es una reserva con varios vuelos o varias reservas encadenadas. La respuesta del equipo es que ninguna de las dos: son \textbf{cuatro conceptos distintos} que la industria separa por razones operativas y que aquí se separan por razones de modelado. Colapsarlos impide representar cancelaciones parciales, grupos de pasajeros e ingresos atribuibles por segmento.
+
+\begin{longtable}{@{}L{2.4cm} L{3.2cm} L{4.2cm} L{6.6cm}@{}}
+\toprule \textbf{Concepto} & \textbf{Granularidad} & \textbf{Contiene} & \textbf{Por qué es entidad propia} \\ \midrule \endfirsthead
+\toprule \textbf{Concepto} & \textbf{Granularidad} & \textbf{Contiene} & \textbf{Por qué es entidad propia} \\ \midrule \endhead
+\textbf{Reserva} (PNR) & Una transacción comercial & Localizador alfanumérico, contacto, canal, agencia, estado global & Es la unidad atómica de compra (SUP-28) y la unidad que el pasajero conoce y consulta. \\
+\textbf{Segmento de itinerario} & Un tramo de un trayecto & Instancia de vuelo, número de trayecto, orden dentro del trayecto, clase tarifaria & Es donde vive el enlace con el inventario: un itinerario con escala tiene dos segmentos que consumen cupo en dos vuelos distintos. \\
+\textbf{Tiquete} & Un pasajero de la reserva & Documento de identidad, nombre, número de tiquete, estado & Una reserva puede cubrir varios pasajeros, y la cancelación o el reembolso pueden aplicar a uno y no a los demás. \\
+\textbf{Cupón} & Un pasajero $\times$ un segmento & Estado (emitido, volado, cancelado, reembolsado), precio congelado, asiento asignado & Es el registro atómico de derecho de transporte y la única granularidad donde ocupación e ingresos se calculan sin doble conteo. \\
+\bottomrule
+\caption{Descomposición de la reserva. Cardinalidad: 1 reserva $\rightarrow$ $N$ segmentos, 1 reserva $\rightarrow$ $M$ tiquetes, $N \times M$ cupones.}
+\end{longtable}
+
+\nota{\textbf{Consecuencia analítica.} El cupón es el grano del hecho principal del modelo en estrella. Medir ocupación sobre reservas sobreestimaría, porque una reserva de tres pasajeros ocupa tres asientos, y medir ingresos sobre reservas impediría atribuir ingreso por ruta cuando el itinerario tiene escala. Fijar el grano en el cupón resuelve ambos problemas de una vez, y es la razón por la cual esta separación no es un lujo de modelado sino un prerrequisito del \emph{pipeline} analítico.}
+
+\subsection{Ejemplo de descomposición: ida y vuelta con escala}
+
+El caso más exigente que el modelo debe soportar es un viaje de ida y regreso en el que ambos trayectos tienen escala. Dado que BOG es el único punto de conexión (SUP-53), un ejemplo válido es Cartagena--Lima con regreso, para dos pasajeros:
+
+\begin{longtable}{@{}C{2.6cm} C{2.6cm} L{3.6cm} L{5.6cm}@{}}
+\toprule \textbf{journey\_number} & \textbf{segment\_order} & \textbf{Vuelo} & \textbf{Cupones generados} \\ \midrule \endfirsthead
+\toprule \textbf{journey\_number} & \textbf{segment\_order} & \textbf{Vuelo} & \textbf{Cupones generados} \\ \midrule \endhead
+1 & 1 & CTG $\rightarrow$ BOG & Uno por pasajero \\
+1 & 2 & BOG $\rightarrow$ LIM & Uno por pasajero \\
+2 & 1 & LIM $\rightarrow$ BOG & Uno por pasajero \\
+2 & 2 & BOG $\rightarrow$ CTG & Uno por pasajero \\
+\bottomrule
+\caption{Una reserva, dos trayectos, cuatro segmentos, dos tiquetes y ocho cupones.}
+\end{longtable}
+
+No se requiere ninguna entidad adicional: la clave \texttt{UNIQUE(reservation\_id, journey\_number, segment\_order)} distingue sin ambigüedad los cuatro segmentos, y el MCT se evalúa entre el segmento 1 y el 2 de cada trayecto, nunca entre el segmento 2 del trayecto 1 y el segmento 1 del trayecto 2. Los ocho cupones consumen ocho cupos en cuatro instancias de vuelo distintas, todos adquiridos dentro de la misma transacción atómica (SUP-28).
+
+\subsection{Estados de la reserva y del cupón}
+
+Estados de la reserva: \texttt{CREADA} $\rightarrow$ \texttt{BLOQUEADA} $\rightarrow$ (\texttt{EXPIRADA} $\mid$ \texttt{PAGADA} $\rightarrow$ \texttt{CONFIRMADA}) $\rightarrow$ (\texttt{REPROGRAMADA} $\mid$ \texttt{CANCELADA} $\rightarrow$ \texttt{REEMBOLSO\_PENDIENTE} $\rightarrow$ \texttt{REEMBOLSADA} $\mid$ \texttt{CERRADA}).
+
+Estados del cupón: \texttt{EMITIDO} $\rightarrow$ (\texttt{CHECKED\_IN} $\rightarrow$ \texttt{VOLADO} $\mid$ \texttt{NO\_SHOW} $\mid$ \texttt{CANCELADO} $\rightarrow$ \texttt{REEMBOLSADO}).
+
+Ambas máquinas son independientes, y esa independencia tiene consecuencias en el \emph{pipeline}: un cupón puede cancelarse individualmente sin que la reserva cambie de estado (RF-45), de modo que el registro de eventos de reserva no basta para detectar todos los cambios relevantes para la analítica. Es el origen de SUP-51.
+
+% =====================================================================
+\section{Ventanas temporales del sistema}
+\label{sec:ventanas}
+
+El sistema está gobernado por plazos. Consolidarlos en un único lugar evita que queden dispersos como constantes mágicas en el código y hace explícito qué es parámetro configurable y qué es obligación regulatoria.
+
+\begin{longtable}{@{}L{4.4cm} L{3.4cm} L{2.0cm} L{5.6cm}@{}}
+\toprule \textbf{Ventana} & \textbf{Valor} & \textbf{Origen} & \textbf{Efecto en el sistema} \\ \midrule \endfirsthead
+\toprule \textbf{Ventana} & \textbf{Valor} & \textbf{Origen} & \textbf{Efecto en el sistema} \\ \midrule \endhead
+Materialización de instancias & 361 días antes de la salida & Comercial & Horizonte superior de venta y tamaño de la tabla de inventario (SUP-08). \\
+Venta de clase XS & De 361 a 60 días antes & Comercial & Deja de ser ofertable a menos de 60 días aunque tenga cupo (SUP-14). \\
+Venta de clase S & De 361 a 30 días antes & Comercial & Ídem, umbral de 30 días. \\
+Venta de clase M & De 361 a 7 días antes & Comercial & Ídem, umbral de 7 días. \\
+Venta de clases L y PR & De 361 días al cierre de venta & Comercial & Siempre ofertables mientras haya cupo; son la tarifa de última hora. \\
+Bloqueo temporal de cupo & 15 minutos & Comercial & Vida del bloqueo durante el pago (SUP-24, SUP-25). \\
+Bloqueo de asiento en \emph{check-in} & 5 minutos & Comercial & Ventana propia, dimensionada por la duración de la selección de asiento y no por la del pago (SUP-57). \\
+MCT máximo & 6 h nacional, 8 h internacional & Comercial & Umbral superior de conexión ofertable (SUP-54). \\
+Barrido de bloqueos expirados & Cada 60 segundos & Técnico & Red de seguridad complementaria a la liberación perezosa (SUP-26). \\
+Cierre de venta & 2 horas antes de la salida & Operacional & Última transacción de reserva admitida para la instancia. \\
+Apertura de \emph{check-in} & 24 horas antes de la salida & Operacional & Momento en que XS, S y M pueden elegir asiento (SUP-22). \\
+Cierre de \emph{check-in} & 1 hora antes (nacional), 2 horas (internacional) & Operacional & Tras el cierre, el cupón no atendido transita a \texttt{NO\_SHOW}. \\
+Cierre de vuelo & A la salida efectiva & Operacional & Congela el inventario y dispara el cálculo de ocupación real (SUP-21). \\
+Retracto & 48 h tras la compra, con $\ge 8$ días (nacional) o 15 (internacional) al vuelo & \textbf{Regulatorio} & Elegibilidad evaluada contra la marca de tiempo exacta de compra y el tipo de segmento. \\
+Desistimiento & Hasta 24 h antes del vuelo & \textbf{Regulatorio} & Habilita reembolso mínimo del 90\,\% de la tarifa base en tarifas no promocionales. \\
+Pago del reembolso & Hasta 30 días calendario & \textbf{Regulatorio} & SLA operativo y estado intermedio \texttt{REEMBOLSO\_PENDIENTE}. \\
+Cadencia del ETL & Cada 60 minutos & Técnico & Deriva de la latencia analítica tolerada (SUP-49). \\
+Recarga de partición de cupones & Instancias con salida en las últimas 48 h & Técnico & Captura los cambios de estado de cupón que la marca de agua no detecta (SUP-51). \\
+Retención de datos personales & 5 años tras el último vuelo & Regulatorio & Define la política de purga y el alcance de la seudonimización en el OLAP (SUP-50). \\
+\bottomrule
+\caption{Ventanas temporales. Las marcadas como regulatorias no son configurables a la baja.}
+\end{longtable}
+
+% =====================================================================
+\section{Matriz de reembolso}
+\label{sec:reembolso}
+
+El porcentaje se calcula sobre la \textbf{tarifa base}, nunca sobre el total pagado. Los impuestos asociados al transporte no prestado se devuelven íntegros en todos los casos; la tarifa administrativa no es reembolsable. El sistema evalúa la matriz comercial y el mínimo regulatorio y aplica \textbf{el valor más favorable al pasajero} (SUP-34).
+
+\begin{longtable}{@{}L{1.6cm} C{2.0cm} C{2.4cm} C{2.4cm} C{2.2cm} L{4.4cm}@{}}
+\toprule
+\textbf{Clase} & \textbf{Promo\-cional} & \textbf{$>$ 24 h antes} & \textbf{$<$ 24 h antes} & \textbf{No-show} & \textbf{Observación} \\ \midrule \endfirsthead
+\toprule
+\textbf{Clase} & \textbf{Promo\-cional} & \textbf{$>$ 24 h antes} & \textbf{$<$ 24 h antes} & \textbf{No-show} & \textbf{Observación} \\ \midrule \endhead
+XS & Sí & 20\,\% & 0\,\% & 0\,\% & Sin derecho de desistimiento por ser promocional; el retracto sí aplica dentro de su ventana. \\
+S & Sí & 40\,\% & 10\,\% & 0\,\% & Ídem XS. \\
+M & No & 90\,\% & 50\,\% & 0\,\% & El 90\,\% es el piso regulatorio de desistimiento, no una concesión comercial. \\
+L & No & 100\,\% & 80\,\% & 25\,\% & Tarifa flexible: la política comercial supera el piso regulatorio. \\
+PR & No & 100\,\% & 100\,\% & 50\,\% & Totalmente reembolsable. \\
+\bottomrule
+\caption{Porcentaje de reembolso sobre la tarifa base, por clase y momento de la solicitud.}
+\end{longtable}
+
+\nota{\textbf{Por qué una matriz y no una regla binaria.} Una regla del tipo ``solo L y PR reembolsan'' es inejecutable en Colombia, porque el desistimiento obliga a devolver al menos el 90\,\% a toda tarifa no promocional, y M lo es. La matriz permite que política comercial y obligación legal convivan en una estructura de datos evaluable en lugar de en excepciones dispersas por el código.}
+
+\subsection{Marco regulatorio que la sustenta}
+\label{sec:regulacion}
+
+La Aeronáutica Civil es la autoridad con potestad reglamentaria en la materia; el RAC~3 reconoce ambos derechos y la Resolución 1375 de 2015 fija sus condiciones.
+
+\begin{longtable}{@{}L{2.4cm} L{5.6cm} L{7.4cm}@{}}
+\toprule \textbf{Derecho} & \textbf{Condiciones} & \textbf{Efecto en el sistema} \\ \midrule \endfirsthead
+\toprule \textbf{Derecho} & \textbf{Condiciones} & \textbf{Efecto en el sistema} \\ \midrule \endhead
+Desistimiento & Hasta 24 horas antes del vuelo, con retención de hasta el 10\,\% de la tarifa, excluyendo tasas, impuestos y tarifa administrativa. No aplica a tarifas promocionales. & Fija el piso del 90\,\% para M, L y PR, y habilita los porcentajes reducidos de XS y S por su condición promocional (SUP-15). \\
+Retracto & Ventas a distancia, dentro de las 48 horas siguientes a la compra y con al menos 8 días de anticipación en vuelo nacional o 15 en internacional. Retención de \$60.000~COP o USD~50. & Prevalece sobre la política comercial de cualquier clase, incluidas XS y S. Obliga a persistir la marca de tiempo exacta de compra y el tipo de segmento. \\
+Plazo de reembolso & 30 días calendario desde la comunicación. & SLA operativo y estado intermedio \texttt{REEMBOLSO\_PENDIENTE}. \\
+\bottomrule
+\caption{Régimen de desistimiento y retracto aplicado al diseño.}
+\end{longtable}
+
+\nota{\textbf{Salvedad documentada.} El numeral del RAC~3 sobre retracto fue objeto de suspensión provisional por el Consejo de Estado, ante lo cual parte de la industria aplica el artículo 47 de la Ley 1480 de 2011. El equipo asume el régimen de la Resolución 1375 de 2015 y modela ventanas, retenciones y porcentajes como \textbf{parámetros configurables}, precisamente porque el marco aplicable ya demostró ser variable. Esa parametrización es una decisión de arquitectura derivada de la incertidumbre regulatoria (RNF-29).}
+
+Aplican además la Ley~1581 de 2012 y el Decreto~1377 de 2013 en materia de datos personales (finalidad, autorización, supresión y retención; impacta SUP-50 y el ETL); PCI-DSS, cuyo alcance se reduce a la autoevaluación SAQ-A por delegación tokenizada (SUP-30); y el régimen tributario, con IVA del 19\,\% en transporte nacional y exención en internacional, que obliga a la separación de componentes de precio de SUP-18.
+
+% =====================================================================
+\section{Reglas de negocio}
+\label{sec:reglas}
+\begin{longtable}{@{}L{1.6cm} L{11.2cm} L{2.4cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Regla} & \textbf{Deriva de} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Regla} & \textbf{Deriva de} \\
+\midrule
+\endhead
+RN-01 & En ninguna circunstancia la suma de cupos vendidos y bloqueados de una tupla \texttt{(instancia\_vuelo, cabina)} puede exceder la capacidad física de esa cabina. No se admite sobreventa. & SUP-19, SUP-20 \\
+RN-02 & La suma de cupos autorizados de las clases tarifarias de una cabina no puede exceder la capacidad física de esa cabina. & SUP-13 \\
+RN-03 & Una clase tarifaria es ofertable solo si tiene cupo disponible \emph{y} la fecha de salida está dentro de su ventana de anticipación. El sistema cotiza la clase más barata que cumpla ambas condiciones. & SUP-13, SUP-14 \\
+RN-04 & Un bloqueo de inventario expira automáticamente 15 minutos después de su creación y libera el cupo. & SUP-24, SUP-26 \\
+RN-05 & Una reserva multi-segmento se confirma en su totalidad o no se confirma en absoluto. No existen estados parciales persistidos en la creación. & SUP-28 \\
+RN-06 & Los bloqueos de un itinerario multi-segmento se adquieren en orden determinístico ascendente por identificador de instancia de vuelo, y el bloqueo de crédito de agencia se adquiere en último lugar. & SUP-28, SUP-45 \\
+RN-07 & Una reserva solo transita a \texttt{CONFIRMADA} tras autorización exitosa de pago o débito exitoso de crédito de agencia. & SUP-27, SUP-43 \\
+RN-08 & El asiento físico se asigna en la compra para las clases L y PR, y en el \emph{check-in} para XS, S y M. & SUP-22, SUP-23 \\
+RN-09 & El reembolso es el mayor entre el porcentaje comercial de la clase y el mínimo regulatorio aplicable de retracto o desistimiento. & SUP-33, SUP-34 \\
+RN-10 & Todo porcentaje de reembolso y toda penalidad se calculan sobre la tarifa base, excluyendo impuestos y tasas. & SUP-18 \\
+RN-11 & Toda transición de estado de reserva y de cupón genera un evento inmutable con marca de tiempo, actor y motivo. & SUP-36, SUP-37 \\
+RN-12 & Un reintento con una clave de idempotencia ya procesada retorna el resultado original sin generar una nueva reserva. & SUP-29 \\
+RN-13 & Un itinerario con escala solo es ofertable si el intervalo entre llegada y salida es mayor o igual al MCT aplicable, evaluado únicamente entre segmentos del mismo trayecto. & SUP-06, SUP-10 \\
+RN-14 & El sistema nunca persiste el número primario de la tarjeta de pago. & SUP-30 \\
+RN-15 & La copia analítica de datos de pasajeros contiene únicamente identificadores seudonimizados. & SUP-50 \\
+\bottomrule
+\caption{Reglas de negocio y su trazabilidad hacia los supuestos.}
+\end{longtable}
+
+% =====================================================================
+\section{Volumetría y perfil de carga}
+\label{sec:volumetria}
+El enunciado señala que hay picos en temporada alta sin dar cifras. El equipo adopta las siguientes magnitudes como base cuantitativa; sin ellas, ningún requisito no funcional sería verificable.
+
+\begin{longtable}{@{}L{6.4cm} L{3.4cm} L{5.6cm}@{}}
+\toprule
+\textbf{Parámetro} & \textbf{Valor asumido} & \textbf{Origen del supuesto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Parámetro} & \textbf{Valor asumido} & \textbf{Origen del supuesto} \\
+\midrule
+\endhead
+Aeronaves en flota & 30 & Aerolínea regional de tamaño medio \\
+Salidas diarias & 120 & 4 rotaciones promedio por aeronave \\
+Rutas activas & 45 & Red radial desde BOG \\
+Capacidad promedio por aeronave & 180 asientos (144 Eco / 36 Premium) & SUP-01 \\
+Pasajeros transportados al año & $\approx 5{,}5$ millones & $120 \times 180 \times 0{,}80 \times 365$ \\
+Instancias de vuelo vivas & $\approx 43{.}000$ & $120 \times 361$ (SUP-08) \\
+Relación búsquedas por reserva & 100:1 & Comportamiento típico de comercio electrónico de viajes \\
+Reservas en día promedio & $\approx 12{.}000$ & Derivado del volumen anual \\
+Reservas en día pico & $\approx 30{.}000$ & Factor $2{,}5\times$ sobre el promedio \\
+Reservas en el segundo pico & $\approx 15$ TPS & 70\,\% del día pico concentrado en 6 horas \\
+Búsquedas en el segundo pico & $\approx 800$ QPS & Aplicando la relación 100:1 \\
+Cupones generados al año & $\approx 5{,}5$ millones & Grano del hecho principal del OLAP \\
+Temporadas altas & Dic--ene, Semana Santa, jun--jul & Estacionalidad del mercado colombiano \\
+\bottomrule
+\caption{Volumetría asumida y su derivación.}
+\end{longtable}
+
+\nota{\textbf{Consecuencia arquitectónica.} La asimetría entre 800 QPS de búsqueda y 15 TPS de reserva gobierna la separación de servicios: la búsqueda es de solo lectura, tolerante a datos ligeramente obsoletos y masivamente cacheable; la reserva es de escritura, estrictamente consistente y de bajo volumen. Además, con 15 TPS repartidos entre 43.000 instancias, la contención real solo se materializa sobre los últimos cupos de un vuelo concreto: ese, y no el promedio, es el caso que la prueba de concurrencia debe reproducir.}
+
+% =====================================================================
+\section{Requisitos funcionales}
+\label{sec:rf}
+
+\subsection{Criterio de priorización}
+Se emplea la escala MoSCoW acotada a tres niveles. \textbf{M} (\emph{Must}) identifica los requisitos sin los cuales el sistema no cumple el escenario ni sostiene el invariante de inventario; su ausencia invalida la entrega. \textbf{S} (\emph{Should}) identifica requisitos necesarios para la operación real pero cuya ausencia no impide demostrar la corrección del núcleo transaccional. \textbf{C} (\emph{Could}) identifica requisitos de conveniencia operativa, diferibles a una iteración posterior.
+
+La columna \emph{Traza} referencia el supuesto o la regla de negocio que origina el requisito. Ningún requisito funcional existe sin origen declarado: esa es la condición que hace auditable el documento.
+
+\subsection{Catálogo de requisitos funcionales}
+\begin{longtable}{@{}L{1.4cm} L{8.4cm} L{2.4cm} C{0.8cm} L{3.2cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Descripción} & \textbf{Actor} & \textbf{Pri.} & \textbf{Traza} \\
+\midrule \endfirsthead
+\toprule
+\textbf{ID} & \textbf{Descripción} & \textbf{Actor} & \textbf{Pri.} & \textbf{Traza} \\
+\midrule \endhead
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 1. Búsqueda de disponibilidad}} \\[2pt]
+RF-01 & Buscar vuelos directos indicando aeropuerto de origen, aeropuerto de destino y fecha, devolviendo únicamente instancias con cupo disponible en al menos una clase ofertable. & ACT-01, ACT-02 & M & SUP-07, SUP-19 \\
+RF-02 & Construir itinerarios con una escala en BOG cuando no exista servicio directo o cuando resulten competitivos en precio. & ACT-01, ACT-02 & M & SUP-05 \\
+RF-03 & Descartar toda combinación cuyo intervalo de conexión sea inferior al MCT aplicable (60 min nacional--nacional, 90 min si alguno es internacional), evaluado solo entre segmentos del mismo trayecto. & ACT-01, ACT-02 & M & SUP-06, RN-13 \\
+RF-04 & Permitir la búsqueda de trayectos de ida y de ida y vuelta, agrupando los segmentos por número de trayecto. & ACT-01, ACT-02 & M & SUP-10, SUP-11 \\
+RF-05 & Calcular y presentar la duración total del itinerario y la de la escala en la zona horaria local de cada aeropuerto, a partir de marcas de tiempo persistidas en UTC. & ACT-01, ACT-02 & M & SUP-09 \\
+RF-06 & Permitir filtrar los resultados por número de escalas, franja horaria de salida y cabina. & ACT-01, ACT-02 & C & SUP-12 \\
+RF-84 & Descartar además toda combinación cuyo intervalo de conexión exceda el MCT máximo aplicable (6 h nacional, 8 h internacional). & Sistema & M & SUP-54 \\
+RF-85 & Devolver, cuando no exista vuelo directo ni combinación válida, un resultado vacío con motivo explícito y una propuesta de fechas adyacentes, nunca un error genérico. & ACT-01, ACT-02 & M & SUP-55 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 2. Cotización}} \\[2pt]
+RF-07 & Determinar, para cada segmento, la clase ofertable como la de menor precio que tenga cupo disponible y se encuentre dentro de su ventana de anticipación. & ACT-01, ACT-02 & M & SUP-13, SUP-14, RN-03 \\
+RF-08 & Presentar el precio descompuesto en tarifa base, impuestos y tasas, identificando cada componente por separado. & ACT-01, ACT-02 & M & SUP-18 \\
+RF-09 & Aplicar IVA del 19\,\% sobre la tarifa base en segmentos nacionales y tratar como exentos los internacionales. & ACT-01, ACT-02 & M & SUP-18 \\
+RF-10 & Expresar y persistir todos los importes en pesos colombianos como enteros en unidades enteras de peso. & Sistema & M & SUP-16 \\
+RF-11 & Cotizar cada segmento de forma independiente y presentar el precio agregado del itinerario junto con su desglose por segmento. & ACT-01, ACT-02 & S & SUP-28 \\
+RF-12 & Cuando una agencia cotice en otra moneda, persistir el importe en COP junto con la tasa de cambio aplicada y su marca de tiempo. & ACT-02 & S & SUP-17 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 3. Bloqueo temporal}} \\[2pt]
+RF-13 & Bloquear por 15 minutos el cupo requerido en la tupla \texttt{(instancia\_vuelo, cabina, clase)} de cada segmento del itinerario al iniciar la compra. & ACT-01, ACT-02 & M & SUP-24, RN-04 \\
+RF-14 & Rechazar la creación de todo bloqueo que haga que la suma de cupos vendidos y bloqueados exceda la capacidad física de la cabina, sin excepción y bajo cualquier nivel de concurrencia. & Sistema & M & SUP-20, RN-01 \\
+RF-15 & Adquirir los bloqueos multi-segmento en orden ascendente de identificador de instancia de vuelo y revertir la operación completa si alguno no puede obtenerse. & Sistema & M & SUP-28, RN-05, RN-06 \\
+RF-16 & Informar al usuario el tiempo restante del bloqueo y notificarle su expiración. & ACT-01 & S & SUP-24 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 4. Liberación de cupos expirados}} \\[2pt]
+RF-17 & Considerar no vigente todo bloqueo cuya marca de expiración haya pasado al evaluar disponibilidad, sin depender de que un proceso externo lo haya eliminado. & Sistema & M & SUP-26 \\
+RF-18 & Ejecutar un barrido periódico, con cadencia máxima de 60 segundos, que elimine los bloqueos expirados y restituya el cupo. & Sistema & M & SUP-26 \\
+RF-19 & Registrar un evento de estado \texttt{EXPIRADA} en la reserva asociada al liberar un bloqueo vencido. & Sistema & S & SUP-36, RN-11 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 5. Asignación de asiento y \emph{check-in}}} \\[2pt]
+RF-20 & Presentar el mapa de asientos y permitir seleccionar un asiento libre en el momento de la compra para las clases \textbf{L y PR}, bloqueándolo por la misma ventana de 15 minutos del cupo. & ACT-01, ACT-02 & M & SUP-23, SUP-25, RN-08 \\
+RF-21 & No asignar asiento en la compra para las clases XS, S y M; su asignación ocurre en el \emph{check-in}. & Sistema & M & SUP-22, RN-08 \\
+RF-22 & Habilitar el \emph{check-in} desde 24 horas antes de la salida y cerrarlo 1 hora antes en segmentos nacionales o 2 horas antes en internacionales. & ACT-01, ACT-03 & M & SUP-22 \\
+RF-23 & Durante el \emph{check-in}, permitir seleccionar un asiento libre de la cabina correspondiente y rechazar la selección de un asiento ya asignado. & ACT-01, ACT-03 & M & SUP-22 \\
+RF-24 & Emitir el pase de abordar una vez completado el \emph{check-in} y transitar el cupón a \texttt{CHECKED\_IN}. La asignación solo se considera firme al completarse el \emph{check-in}. & ACT-01, ACT-03 & S & SUP-22 \\
+RF-81 & Bloquear el asiento seleccionado durante el \emph{check-in} por 5 minutos, liberándolo automáticamente si el proceso no se completa. & ACT-01, ACT-03 & M & SUP-57 \\
+RF-82 & Rechazar con código de conflicto todo intento de asignar un asiento ya ocupado, apoyándose en la restricción de unicidad del motor y no en una verificación previa desde la aplicación. & Sistema & M & SUP-57, RNF-25 \\
+RF-83 & Refrescar el mapa de asientos y marcar el asiento en disputa tras un rechazo por conflicto, sin perder el resto de la selección del usuario. & ACT-01 & S & SUP-57 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 6. Pago y confirmación (canal directo)}} \\[2pt]
+RF-25 & Delegar la captura del medio de pago a una pasarela externa con tokenización, sin recibir ni persistir en ningún momento el número de tarjeta. & ACT-01, ACT-06 & M & SUP-30, RN-14 \\
+RF-26 & Operar el pago en dos fases: autorización al inicio y captura solo tras confirmar la reserva. & Sistema & M & SUP-27 \\
+RF-27 & Transitar la reserva a \texttt{CONFIRMADA} únicamente al recibir autorización exitosa dentro de la ventana de bloqueo vigente. & Sistema & M & SUP-27, RN-07 \\
+RF-28 & Exponer un punto de recepción de notificaciones asíncronas capaz de procesar eventos duplicados o fuera de orden sin alterar el resultado. & ACT-06 & M & SUP-31 \\
+RF-29 & Rechazar la confirmación y ordenar la liberación de la autorización ante la pasarela si la ventana de bloqueo expiró. & Sistema & M & SUP-27 \\
+RF-30 & Aceptar una clave de idempotencia en toda operación de escritura y devolver el resultado original ante un reintento con la misma clave. & ACT-01, ACT-02 & M & SUP-29, RN-12 \\
+RF-31 & Emitir, al confirmar, el localizador, los tiquetes por pasajero y los cupones por pasajero y segmento, con el precio congelado. & Sistema & M & Sec.~\ref{sec:reserva} \\
+RF-32 & Notificar al pasajero la confirmación de la reserva por el canal de contacto registrado. & ACT-01 & S & SUP-40 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 7. API de agencias: comisiones y línea de crédito}} \\[2pt]
+RF-33 & Exponer una API B2B separada de la del canal directo, con búsqueda, cotización, reserva, consulta y cancelación. & ACT-02 & M & SUP-38 \\
+RF-34 & Autenticar a las agencias mediante credenciales de cliente OAuth~2.0 y autorizar cada operación según el rol del canal. & ACT-02 & M & SUP-39 \\
+RF-35 & Mantener por agencia una línea de crédito rotativa con cupo asignado, saldo utilizado y saldo disponible. & ACT-04 & M & SUP-43 \\
+RF-36 & Debitar el importe de la línea de crédito dentro de la misma transacción que confirma la reserva, y rechazarla si el débito hace que el saldo utilizado exceda el cupo asignado. & ACT-02 & M & SUP-43, SUP-44 \\
+RF-37 & Adquirir el bloqueo sobre la línea de crédito después de todos los bloqueos de inventario del itinerario, respetando un orden total de recursos. & Sistema & M & SUP-45, RN-06 \\
+RF-38 & Restituir a la línea de crédito el importe efectivamente reembolsado, no el importe original, al cancelarse una reserva de agencia. & Sistema & M & SUP-43, SUP-33 \\
+RF-39 & Calcular la comisión como porcentaje sobre la tarifa base, configurable por agencia y clase y versionado temporalmente, sin alterar el precio pagado por el pasajero. & Sistema & M & SUP-41 \\
+RF-40 & Generar un corte mensual de liquidación por agencia con el detalle de reservas, importes y comisiones del periodo. & ACT-04 & S & SUP-41 \\
+RF-41 & Permitir a la agencia consultar en cualquier momento su cupo asignado, saldo utilizado y saldo disponible. & ACT-02 & S & SUP-43 \\
+RF-42 & Registrar el canal de origen y, cuando aplique, el identificador de agencia en toda reserva creada. & Sistema & M & SUP-40 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 8. Consulta posventa}} \\[2pt]
+RF-43 & Recuperar una reserva mediante el localizador y un dato de verificación del titular, sin exigir cuenta de usuario. & ACT-01 & M & Sec.~\ref{sec:reserva} \\
+RF-44 & Devolver el itinerario completo, los pasajeros, los cupones con su estado, los asientos asignados y el desglose de precio. & ACT-01, ACT-02, ACT-03 & M & Sec.~\ref{sec:reserva} \\
+RF-45 & Restringir a cada agencia la consulta y modificación exclusivamente a las reservas originadas en su propio canal. & ACT-02 & M & SUP-39, SUP-40 \\
+RF-46 & Presentar al pasajero, antes de confirmar una cancelación, el importe estimado de reembolso según la matriz vigente. & ACT-01 & S & SUP-33 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 9. Cancelación y reembolso}} \\[2pt]
+RF-47 & Cancelar una reserva completa o cupones individuales de un pasajero, liberando el cupo correspondiente en cada segmento afectado. La atomicidad de SUP-28 rige la creación de la reserva y no impide la cancelación parcial posterior, que es una decisión informada del pasajero y no una venta huérfana. & ACT-01, ACT-02, ACT-03 & M & SUP-28, SUP-33 \\
+RF-48 & Calcular el reembolso como porcentaje sobre la tarifa base, según la clase adquirida y el momento de la solicitud. & Sistema & M & SUP-33, Sec.~\ref{sec:reembolso} \\
+RF-49 & Evaluar la elegibilidad para retracto y desistimiento y aplicar el importe más favorable al pasajero entre el resultado comercial y el mínimo regulatorio. & Sistema & M & SUP-34, RN-09 \\
+RF-50 & Calcular todo porcentaje y penalidad sobre la tarifa base, devolviendo íntegros los impuestos del transporte no prestado y reteniendo la tarifa administrativa. & Sistema & M & SUP-18, RN-10 \\
+RF-51 & Registrar la solicitud, transitarla a \texttt{REEMBOLSO\_PENDIENTE} y ordenar la devolución ante la pasarela o la restitución de crédito, con seguimiento hasta \texttt{REEMBOLSADA}. & Sistema & M & SUP-34, SUP-43 \\
+RF-52 & Hacer efectivo el reembolso dentro de los 30 días calendario y alertar sobre solicitudes próximas a ese plazo. & ACT-04 & S & Sec.~\ref{sec:regulacion} \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 10. Reprogramación}} \\[2pt]
+RF-53 & Reprogramar la fecha de un segmento, sujeto a que la clase adquirida lo admita según la tabla de reglas tarifarias. & ACT-01, ACT-02, ACT-03 & M & SUP-32, SUP-35 \\
+RF-54 & Liberar el cupo original y adquirir el nuevo dentro de una única transacción atómica; si el nuevo cupo no está disponible, la reserva original permanece intacta. & Sistema & M & SUP-35 \\
+RF-55 & Cobrar la diferencia tarifaria entre la clase original y la ofertable en la nueva fecha, más la penalidad de cambio aplicable. & Sistema & M & SUP-32, SUP-35 \\
+RF-56 & Revalidar el MCT del itinerario resultante al reprogramar un segmento de un trayecto con escala. & Sistema & S & SUP-06 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 11. Gestión de programación e instancias}} \\[2pt]
+RF-57 & Definir vuelos programados con ruta, aeropuertos, hora local de salida y llegada, días de operación y periodo de vigencia. & ACT-04 & M & SUP-07 \\
+RF-58 & Asociar a cada vuelo programado un tipo de aeronave, del cual se derivan la capacidad por cabina y el mapa de asientos. & ACT-04 & M & SUP-01, SUP-02 \\
+RF-59 & Materializar automáticamente las instancias derivadas de cada programación dentro de una ventana rodante de 361 días, copiando los horarios ya resueltos en UTC. & Sistema & M & SUP-08, SUP-09 \\
+RF-60 & Inicializar, al materializar una instancia, su inventario por cabina con la capacidad física del tipo de aeronave asignado. & Sistema & M & SUP-20 \\
+RF-61 & Configurar el cupo autorizado de cada clase tarifaria, validando que su suma no exceda la capacidad de la cabina. & ACT-04 & M & SUP-13, RN-02 \\
+RF-62 & Configurar la ventana de anticipación de cada clase tarifaria sin requerir despliegue de código. & ACT-04 & M & SUP-14 \\
+RF-63 & Cerrar la venta de una instancia 2 horas antes de su salida programada. & Sistema & M & Sec.~\ref{sec:ventanas} \\
+RF-86 & Registrar los horarios reales de salida y llegada de cada instancia cuando se produzcan. & Sistema & M & SUP-56 \\
+RF-87 & Registrar como evento del cupón la pérdida de conexión cuando el retraso real de un segmento haga inviable el siguiente del mismo trayecto, sin ejecutar reacomodo. & Sistema & M & SUP-56, EXC-07 \\
+RF-64 & Cerrar la instancia a la salida efectiva, marcar como \texttt{VOLADO} los cupones con \emph{check-in} completado y como \texttt{NO\_SHOW} los restantes, y consolidar la ocupación real. & Sistema & M & SUP-21, SUP-48 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 12. Trazabilidad e inmutabilidad}} \\[2pt]
+RF-65 & Registrar cada transición de estado de reserva y de cupón con identificador, estado anterior, estado nuevo, marca de tiempo UTC, actor, canal y motivo. & Sistema & M & SUP-36, RN-11 \\
+RF-66 & Mantener el registro de eventos como tabla de solo anexado, sin exponer operaciones de actualización ni eliminación, y sin conceder esos privilegios a la credencial de aplicación. & Sistema & M & SUP-37 \\
+RF-67 & Permitir derivar el estado vigente de una reserva a partir del registro de eventos, de modo que una discrepancia con la proyección sea detectable. & Sistema & M & SUP-37 \\
+RF-68 & Reconstruir el histórico completo de una reserva en orden cronológico, incluidos cambios de precio, asiento y estado. & ACT-03, ACT-04 & M & SUP-36 \\
+RF-69 & Registrar los eventos de la línea de crédito de cada agencia: débitos, restituciones y modificaciones de cupo. & Sistema & S & SUP-43 \\
+RF-70 & Conservar los datos personales durante 5 años posteriores al último vuelo y purgarlos al vencimiento del plazo. & Sistema & C & SUP-50 \\[4pt]
+
+\multicolumn{5}{@{}l}{\textbf{\footnotesize 13. Extracción analítica (ETL)}} \\[2pt]
+RF-71 & Extraer de forma incremental los eventos posteriores a una marca de agua persistida entre ejecuciones, sin volcado completo del registro. & ACT-07 & M & SUP-37, SUP-49 \\
+RF-72 & Recargar la partición de cupones correspondiente a instancias con salida en las últimas 48 horas, para capturar los cambios de estado que la marca de agua no detecta. & ACT-07 & M & SUP-51 \\
+RF-73 & Ejecutar el proceso de extracción con una cadencia máxima de 60 minutos. & ACT-07 & M & SUP-49 \\
+RF-74 & Seudonimizar los identificadores de pasajero y excluir del destino analítico los datos personales directos y los de pago. & ACT-07 & M & SUP-50, RN-15 \\
+RF-75 & Cargar los datos necesarios para calcular el factor de ocupación por instancia, agregable por ruta y periodo. & ACT-07 & M & SUP-48 \\
+RF-76 & Cargar los datos necesarios para calcular el ingreso por clase tarifaria, neto de comisión de agencia. & ACT-07 & M & SUP-41, SUP-48 \\
+RF-77 & Cargar el histórico de eventos con granularidad suficiente para calcular el intervalo entre confirmación y cancelación, segmentado por clase, canal y ruta. & ACT-07 & M & SUP-36, SUP-48 \\
+RF-78 & Capturar una instantánea diaria del inventario por instancia, cabina y clase, para reconstruir la curva de reservas previa a la salida. & ACT-07 & S & SUP-13, SUP-48 \\
+RF-79 & Ejecutar el ETL sin degradar la latencia de las operaciones transaccionales ni bloquear sus escrituras. & ACT-07 & M & SUP-46 \\
+RF-80 & Registrar las tablas de ambas bases de datos como metadatos consultables en el catálogo de datos. & ACT-05, ACT-07 & M & Sec.~\ref{sec:aws} \\
+\bottomrule
+\caption{Catálogo de requisitos funcionales. Prioridad: M (\emph{Must}), S (\emph{Should}), C (\emph{Could}).}
+\end{longtable}
+
+\subsection{Resolución explícita de las preguntas guía}
+El enunciado plantea cinco preguntas que el equipo debe resolver por su cuenta. Se responden aquí de forma directa, con referencia al requisito que materializa cada decisión.
+
+\begin{longtable}{@{}L{5.4cm} L{8.4cm} L{2.6cm}@{}}
+\toprule \textbf{Pregunta del enunciado} & \textbf{Decisión del equipo} & \textbf{Materializa} \\ \midrule \endfirsthead
+\toprule \textbf{Pregunta del enunciado} & \textbf{Decisión del equipo} & \textbf{Materializa} \\ \midrule \endhead
+¿Quiénes son los actores y comparten el mismo sistema? & Siete actores sobre un único servicio de inventario, expuestos mediante tres interfaces distintas: web pública, API B2B y consola interna. La separación es de interfaz y de política de acceso, nunca de lógica de inventario, para que exista un solo invariante. & RF-33, RF-34, RF-42 \\
+¿Cómo se maneja una reserva con escalas? & Una única reserva descompuesta por dos ejes: segmentos de itinerario sobre el eje del vuelo y tiquetes sobre el eje del pasajero, cuya intersección es el cupón. No son reservas encadenadas: la creación es atómica y no se venden segmentos huérfanos. & RF-02, RF-15, RF-31 \\
+¿Se permite reservar sin pagar de inmediato? & En el canal directo, no: existe un bloqueo de 15 minutos, pero la confirmación exige autorización de pasarela dentro de esa ventana. En el canal de agencia no media pasarela, pero el débito de la línea de crédito es parte atómica de la confirmación. En ningún caso queda inventario comprometido sin contrapartida financiera. & RF-13, RF-27, RF-36 \\
+¿Qué ocurre si el pasajero cancela o cambia la fecha? & La cancelación aplica una matriz porcentual clase por ventana, sobre la cual prevalece siempre el mínimo regulatorio de retracto y desistimiento. El cambio de fecha se modela como liberación y readquisición atómica de cupo, con cobro de diferencia y penalidad. & RF-47 a RF-52, RF-53 a RF-56 \\
+¿Las agencias tienen un flujo distinto? & Mismo motor de inventario y mismo invariante, sin cupos privilegiados. Difieren en interfaz, autenticación, modo de liquidación mediante línea de crédito, y en la existencia de comisión y liquidación mensual. & RF-33 a RF-42 \\
+\bottomrule
+\caption{Resolución de las preguntas guía de la sección 5.1 del enunciado.}
+\end{longtable}
+
+\nota{\textbf{El requisito que gobierna la implementación.} RF-14 y RF-36 son estructuralmente el mismo problema aplicado a dos recursos distintos: una condición de capacidad que debe verificarse y actualizarse de forma atómica bajo concurrencia. RF-37 existe porque la coexistencia de ambos introduce un riesgo que ninguno presenta por separado --- el interbloqueo entre transacciones que adquieren los mismos recursos en distinto orden --- y ese riesgo no se resuelve con una decisión de base de datos sino con una convención de diseño: un orden total sobre los recursos, respetado por todo camino de código que escriba inventario.}
+
+% =====================================================================
+\section{Requisitos no funcionales}
+\label{sec:rnf}
+
+\subsection{Criterio de formulación}
+Cada requisito no funcional se expresa con una métrica verificable y se traza a un riesgo de negocio concreto. Un requisito sin métrica no es verificable y uno sin riesgo asociado no es justificable: ambos se consideran defectuosos. Las cifras de esta sección se derivan de la volumetría de la Sección~\ref{sec:volumetria} y de los supuestos de la Sección~\ref{sec:supuestos}, no de valores de referencia genéricos de la industria.
+
+La columna \emph{Verificación} indica el método de comprobación. Su presencia es deliberada: los requisitos de concurrencia, disponibilidad y auditabilidad deben demostrarse con evidencia en la implementación de la Sección~\ref{sec:impl}, no solo declararse.
+
+\subsection{Rendimiento}
+El presupuesto de latencia se fija sobre el percentil 95 y no sobre el promedio, porque el promedio oculta la cola de la distribución, que es donde se pierde la conversión comercial. Todas las cifras se exigen bajo la carga pico de la Sección~\ref{sec:volumetria} (aproximadamente 800~QPS de búsqueda), no en reposo.
+
+La búsqueda con escala admite un presupuesto mayor por una razón cuantificable. Una búsqueda directa es una lectura sobre índice compuesto. Una con escala recupera los vuelos de entrada al \emph{hub} y los de salida hacia el destino, construye el producto de combinaciones y descarta las que incumplen el MCT: con la red actual, del orden de varias decenas de combinaciones candidatas. El costo dominante no es la combinatoria sino la \textbf{cotización de cada superviviente}, que exige evaluar cupo y ventana de anticipación por clase en dos instancias de vuelo distintas. De ahí un factor de dos a tres veces, y no un orden de magnitud.
+
+\begin{longtable}{@{}L{1.5cm} L{5.0cm} L{4.6cm} L{4.9cm}@{}}
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endfirsthead
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endhead
+RNF-01 & La búsqueda de vuelos directos debe responder con un p95 menor o igual a 300~ms, medido en el servidor y bajo carga pico. & La búsqueda concentra el 99\,\% del tráfico. La latencia percibida en este punto determina el abandono antes de la cotización. & Prueba de carga con generador concurrente; reporte de percentiles p50, p95 y p99. \\
+RNF-02 & La búsqueda de itinerarios con una escala debe responder con un p95 menor o igual a 800~ms bajo las mismas condiciones. & Las rutas sin servicio directo dependen enteramente de esta operación; su degradación elimina de facto la oferta hacia esos destinos. & Ídem RNF-01, con pares origen--destino sin vuelo directo. \\
+RNF-03 & La creación de una reserva debe completarse con un p95 menor o igual a 1{,}5~s, excluyendo el tiempo de respuesta de la pasarela externa. & Una reserva lenta consume la ventana de bloqueo y eleva la probabilidad de expiración durante el pago. & Instrumentación del camino de reserva con marcas de tiempo por etapa. \\
+RNF-04 & El rechazo por falta de disponibilidad debe entregarse dentro del mismo presupuesto de latencia que una reserva exitosa. & Un rechazo que llega por \emph{timeout} es indistinguible de una falla y genera reintentos que agravan la contención. & Medición del p95 de la rama de rechazo durante la prueba de concurrencia. \\
+RNF-05 & Toda consulta de la ruta de búsqueda debe resolverse sobre índice, sin recorrido secuencial de \texttt{flight\_instance} ni de \texttt{fare\_bucket}. & Sin plan de acceso declarado, los presupuestos de RNF-01 y RNF-02 son aspiracionales y no verificables. & Inspección del plan de ejecución de las consultas de búsqueda y cotización sobre volumen representativo. \\
+\bottomrule
+\caption{RNF de rendimiento.}
+\end{longtable}
+
+\subsection{Consistencia y concurrencia}
+Esta es la categoría que gobierna la arquitectura. Al haberse descartado la sobreventa (SUP-20), el sistema carece del margen que en la práctica aeronáutica absorbe los errores de concurrencia: en una aerolínea con sobreventa autorizada, un cupo vendido de más queda enmascarado por la tasa de \emph{no-show}. Con invariante estricto, \textbf{cada sobreventa accidental se materializa como una denegación de embarque}, con compensación regulatoria, pasajero afectado en el aeropuerto y exposición a reclamo. La probabilidad de que un defecto de concurrencia pase inadvertido es, por diseño, nula.
+
+Ante dos solicitudes simultáneas por el último cupo, el sistema debe garantizar cinco propiedades: que exactamente una prospere; que la otra reciba un rechazo determinístico y final, no un error transitorio; que ese rechazo respete el presupuesto de latencia; que el invariante sobreviva a la caída del proceso a mitad de transacción; y que en itinerarios multi-segmento no exista compromiso parcial de recursos.
+
+\begin{longtable}{@{}L{1.5cm} L{5.0cm} L{4.6cm} L{4.9cm}@{}}
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endfirsthead
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endhead
+RNF-06 & Bajo cualquier nivel de concurrencia, la suma de cupos vendidos y bloqueados de una tupla \texttt{(instancia\_vuelo, cabina)} no debe exceder nunca la capacidad física. Métrica: cero sobreventas en la prueba de concurrencia, con el contador final exactamente igual a la capacidad. & Cada sobreventa equivale a una denegación de embarque garantizada, con compensación conforme al RAC~3, daño reputacional y exposición a reclamo ante la autoridad. & Prueba automatizada con $N$ hilos simultáneos compitiendo por el último cupo; se asertan exactamente un éxito y $N-1$ rechazos, y el estado final del inventario. \\
+RNF-07 & La solicitud perdedora debe recibir un rechazo determinístico y final, con código de error específico de indisponibilidad, nunca un \emph{timeout} ni un estado indeterminado. & Un error ambiguo induce al usuario o a la agencia a reintentar, lo que multiplica la contención en el momento de mayor disputa. & Verificación del código y del cuerpo del error en los $N-1$ rechazos de la prueba anterior. \\
+RNF-08 & En itinerarios multi-segmento, ninguna transacción fallida debe dejar cupo comprometido ni crédito debitado. Métrica: la suma de cupos ocupados coincide con el número de reservas confirmadas. & Un cupo huérfano bloquea inventario vendible sin contrapartida de ingreso, y un débito huérfano genera disputa contable con la agencia. & Prueba con itinerarios de dos segmentos donde el segundo se agota deliberadamente; conciliación de inventario y saldo de crédito. \\
+RNF-09 & El invariante de crédito de agencia debe cumplirse bajo concurrencia. Métrica: cero sobregiros en la prueba concurrente. & Un sobregiro es una venta sin respaldo financiero: la aerolínea presta servicio sin garantía de cobro. & Prueba con varios agentes de la misma agencia reservando en paralelo contra el saldo restante. \\
+RNF-10 & Toda operación de escritura debe ser idempotente respecto de su clave. Métrica: cero reservas duplicadas ante reintentos del mismo identificador; retención de claves no inferior a 24~horas. & El reintento automático de una agencia tras un \emph{timeout} produciría doble venta y, con línea de crédito, doble débito. & Prueba que repite la misma solicitud con idéntica clave y verifica un único registro creado. \\
+\bottomrule
+\caption{RNF de consistencia y concurrencia.}
+\end{longtable}
+
+\nota{\textbf{Ámbito declarado del bloqueo temporal.} La contención efectiva no ocurre en el pago sino en la adquisición del bloqueo: la solicitud perdedora es rechazada sobre un cupo que podría liberarse hasta 15 minutos después si el ganador no completa el pago. El equipo acepta esta consecuencia y declara que \textbf{no se implementa lista de espera ni notificación de liberación}. Es una decisión de alcance, no una omisión.}
+
+\subsection{Disponibilidad}
+La frase ``no puede caerse en temporada alta'' se traduce en un número derivándolo del costo de la indisponibilidad, no eligiéndolo por convención. Con aproximadamente 5{,}5~millones de pasajeros anuales y el ingreso medio por pasajero de SUP-52, la facturación anual ronda los \$2{,}47~billones~COP, equivalentes a unos \$4{,}7~millones~COP por minuto en promedio y cerca de \$12~millones~COP por minuto en pico. Un objetivo de 99{,}9\,\% otorga un presupuesto de error de unos 43~minutos al mes, lo que sitúa la exposición mensual en el orden de \$200~millones~COP.
+
+El equipo adopta \textbf{99{,}9\,\% anual con elevación a 99{,}95\,\% en las ventanas de temporada alta declaradas}, escalonado por capacidad, y descarta 99{,}99\,\% por un motivo arquitectónico antes que presupuestario. Cuatro nueves exigen despliegue multi-región activo-activo, y ello colisiona con el invariante estricto: un contador de inventario fuertemente consistente con escritor único no se replica entre regiones sin incorporar latencia de consenso en la ruta crítica de reserva. O se relaja la consistencia y se admite sobreventa --- exactamente lo que la aerolínea decidió descartar --- o se conserva el invariante y no se alcanzan cuatro nueves a costo razonable. \textbf{La disponibilidad prometible está acotada por la consistencia exigida}, y esa relación es la justificación real de la cifra.
+
+\begin{longtable}{@{}L{1.5cm} L{5.0cm} L{4.6cm} L{4.9cm}@{}}
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endfirsthead
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endhead
+RNF-11 & Disponibilidad escalonada: búsqueda y cotización 99{,}9\,\%; reserva, pago y confirmación 99{,}95\,\%; consola administrativa 99\,\%. Medida mensualmente sobre solicitudes exitosas. & La indisponibilidad de la reserva es pérdida directa de ingreso; la de la búsqueda es degradable; la de la consola es diferible. Un objetivo único sobredimensiona el costo del componente menos crítico. & Registro de disponibilidad por servicio; informe mensual de presupuesto de error consumido. \\
+RNF-12 & RTO inferior a 15~minutos y RPO igual a cero transacciones confirmadas. & El RTO se deriva de la ventana de negocio: si la interrupción supera los 15~minutos, los bloqueos expiran, el inventario se libera y las notificaciones de pago llegan referidas a reservas inexistentes, generando cobros sin reserva. & Ensayo de restauración desde copia de seguridad con cronometraje; verificación de que ninguna transacción confirmada se pierde. \\
+RNF-13 & Ante indisponibilidad del almacén transaccional, la búsqueda debe degradarse a resultados en caché con antigüedad máxima de 5~minutos. La reserva no es degradable y debe rechazar explícitamente. & Preserva la parte del embudo que no compromete el invariante. Degradar la reserva significaría vender sin verificar inventario. & Prueba de inyección de fallo sobre la base transaccional, verificando que la búsqueda responde y la reserva rechaza limpiamente. \\
+\bottomrule
+\caption{RNF de disponibilidad.}
+\end{longtable}
+
+\subsection{Seguridad}
+El sistema no custodia datos de tarjeta: la captura y el almacenamiento del instrumento de pago se delegan íntegramente a la pasarela, que devuelve un token. La consecuencia de cumplimiento es que el alcance PCI-DSS se reduce al nivel de autoevaluación SAQ-A. La propiedad crítica --- que el número de tarjeta no exista en el sistema --- es verificable de forma estática sobre el esquema, sin necesidad de ejecución.
+
+En materia de datos personales aplican la Ley~1581 de 2012 y el Decreto~1377 de 2013. Aplica asimismo el RAC~3 en cuanto al deber de información al consumidor sobre sus derechos de retracto y desistimiento en el momento de la compra.
+
+\begin{longtable}{@{}L{1.5cm} L{5.0cm} L{4.6cm} L{4.9cm}@{}}
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endfirsthead
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endhead
+RNF-14 & Cero ocurrencias del número de tarjeta en el esquema, en registros de aplicación y en la base analítica. El 100\,\% de las transacciones se referencian mediante token. & Almacenar datos de tarjeta elevaría el alcance de cumplimiento de SAQ-A a SAQ-D y expondría a la aerolínea a sanción y responsabilidad ante una filtración. & Inspección del diccionario de datos y del DDL; revisión de los campos persistidos por el flujo de pago. \\
+RNF-15 & Los datos personales deben tratarse conforme a la Ley~1581: finalidad declarada, autorización registrada, atención de supresión y purga a los 5~años del último vuelo. & El incumplimiento habilita sanción de la autoridad e impide acreditar la licitud del tratamiento ante una reclamación. & Revisión del modelo de datos y de la política de retención; prueba del procedimiento de supresión. \\
+RNF-16 & La base analítica no debe contener datos personales directos ni de pago. Métrica: 100\,\% de identificadores de pasajero seudonimizados en el destino. & El área comercial no requiere identidad para calcular ocupación, ingresos ni cancelaciones; conservarla amplía la superficie de exposición. & Inspección del esquema analítico y de la lógica de transformación del ETL. \\
+RNF-17 & Aislamiento estricto entre agencias: cero accesos cruzados exitosos en la prueba de autorización. & Una fuga entre agencias competidoras expone información comercial sensible y constituye tratamiento no autorizado de datos de terceros. & Prueba automatizada que intenta acceder, con credenciales de la agencia A, a un localizador de la agencia B, y espera respuesta denegada. \\
+RNF-18 & Todo tránsito debe protegerse con TLS~1.2 o superior, y los datos personales deben cifrarse en reposo. & Sin cifrado en tránsito, las credenciales de agencia y los datos de pasajero son interceptables; sin cifrado en reposo, una copia de seguridad extraviada es una filtración. & Verificación de la configuración del punto de entrada y de la opción de cifrado del motor. \\
+\bottomrule
+\caption{RNF de seguridad.}
+\end{longtable}
+
+\subsection{Escalabilidad}
+Ante la incorporación de 20~rutas nuevas en un año, el primer cuello de botella \textbf{no es el motor de base de datos ni la interfaz de reservas, sino la búsqueda de itinerarios con escala}. En una red radial con $S$ destinos, los pares conectables a través del \emph{hub} son del orden de $S \times (S-1)$: pasar de 45 a 65~destinos eleva las combinaciones de aproximadamente 1.980 a 4.160, un factor cercano a $2{,}1$. En el mismo periodo, el volumen de reservas crece de forma aproximadamente proporcional al número de rutas, un factor cercano a $1{,}4$. La operación más costosa crece más rápido que el negocio que la financia, y ese desacople es la definición de un cuello de botella estructural.
+
+Conviene anticipar el diagnóstico intuitivo y descartarlo con datos: no es la contención sobre el inventario. La contención es \emph{por instancia de vuelo}, y añadir rutas añade instancias, de modo que la misma carga se distribuye entre más filas. \textbf{Incorporar rutas reduce la contención por fila en lugar de aumentarla.} El segundo candidato, el crecimiento de la tabla de instancias de aproximadamente 43.000 a 62.000 filas, es irrelevante para cualquier motor relacional moderno.
+
+\begin{longtable}{@{}L{1.5cm} L{5.0cm} L{4.6cm} L{4.9cm}@{}}
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endfirsthead
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endhead
+RNF-19 & Con la red ampliada a 65~destinos, la búsqueda con escala debe conservar un p95 menor o igual a 800~ms sin modificar la clase de instancia de cómputo ni de base de datos. & Si la latencia se degrada al crecer la red, la expansión comercial deteriora la experiencia justamente en los destinos nuevos, que son los que dependen de conexiones. & Prueba de carga sobre conjunto sintético con 65~destinos y volumen proporcional. \\
+RNF-20 & El diseño debe admitir precomputación o caché del resultado de búsqueda con TTL no superior a 5~minutos, sin comprometer el invariante. & Es la mitigación natural del cuello identificado, admisible porque la búsqueda tolera datos ligeramente obsoletos: la validación real ocurre en la adquisición del bloqueo. & Revisión de diseño; comprobación de que ninguna decisión de inventario se toma sobre datos de caché. \\
+RNF-21 & La contención media por instancia de vuelo no debe aumentar al crecer la red. & Confirma que la expansión no degrada el punto crítico de concurrencia y evita invertir esfuerzo de optimización donde no hay problema. & Cálculo analítico sobre la volumetría proyectada, contrastado con la prueba de RNF-19. \\
+RNF-22 & El proceso ETL debe absorber un crecimiento de diez veces en volumen sin superar la ventana de 60~minutos de la Sección~\ref{sec:ventanas}. & Si la ejecución excede su cadencia, los lotes se solapan y la latencia analítica se degrada de forma acumulativa hasta perder utilidad. & Ejecución sobre conjunto multiplicado por diez, con medición del tiempo total. \\
+RNF-23 & Las tablas de hechos del modelo analítico deben estar particionadas por fecha de servicio, de modo que la recarga de SUP-51 y las consultas por periodo accedan solo a las particiones afectadas. & Sin particionado, la recarga de cupones y las consultas agregadas escanean la tabla completa, y RNF-22 deja de ser alcanzable al crecer el histórico. & Inspección del DDL analítico y del plan de ejecución de una consulta acotada por periodo. \\
+\bottomrule
+\caption{RNF de escalabilidad.}
+\end{longtable}
+
+\subsection{Auditabilidad}
+La reconstrucción completa del histórico de una reserva no es un requisito de cumplimiento añadido: es una \textbf{dependencia funcional} de uno de los tres objetivos analíticos del escenario. Su importancia se sostiene en tres razones independientes entre sí.
+
+En lo legal, las disputas de reembolso operan sobre un plazo regulatorio de 30~días y pueden escalar ante la autoridad; sin histórico no es posible acreditar cuándo se presentó la solicitud ni qué política tarifaria estaba vigente. En lo financiero, la conciliación de comisiones y de movimientos de la línea de crédito exige traza de cada débito y restitución. Y en lo analítico, la métrica de \emph{patrones de cancelación} se define como el intervalo entre confirmación y cancelación: ese dato \textbf{no existe en ninguna otra parte del sistema}, pues el estado vigente únicamente indica que la reserva fue cancelada, no cuándo había sido confirmada. Si el registro de eventos falla, no se pierde una capacidad de auditoría: se pierde una tercera parte del entregable analítico.
+
+\begin{longtable}{@{}L{1.5cm} L{5.0cm} L{4.6cm} L{4.9cm}@{}}
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endfirsthead
+\toprule \textbf{ID} & \textbf{Requisito y métrica} & \textbf{Riesgo de negocio} & \textbf{Verificación} \\ \midrule \endhead
+RNF-24 & Cobertura total: el 100\,\% de las transiciones de estado de reserva y de cupón debe generar un evento persistido con marca de tiempo UTC, actor, canal y motivo. & Una transición sin registrar produce un histórico incompleto, no admisible como prueba ni utilizable como fuente analítica. & Prueba que recorre el ciclo de vida completo y asevera un evento por transición. \\
+RNF-25 & Inmutabilidad garantizada a nivel de privilegios: la credencial de aplicación no debe poseer permisos de actualización ni eliminación sobre la tabla de eventos. & Una garantía sostenida solo por convención de código se rompe con el primer defecto o el primer atajo bajo presión de entrega. & Inspección de privilegios del rol de aplicación; intento deliberado de actualización que debe ser rechazado por el motor. \\
+RNF-26 & Conciliación diaria con cero discrepancias en dos comprobaciones: el estado vigente de cada reserva frente a su reconstrucción desde el registro de eventos, y el contador \texttt{held} de cada inventario frente al recuento de \emph{holds} no expirados. & Una divergencia silenciosa invalida a la vez la defensa legal y la métrica analítica. La segunda comprobación es obligatoria porque el contador de bloqueados se mantiene materializado (D-01) y puede desincronizarse. & Rutina de conciliación ejecutable bajo demanda que compara ambos pares de valores y reporta diferencias. \\
+RNF-27 & Retención del histórico de eventos durante 5~años posteriores al último vuelo. & Cubre el horizonte de reclamación y el análisis de estacionalidad interanual, que requiere al menos tres ciclos completos. & Revisión de la política de retención y de la rutina de purga. \\
+RNF-28 & Observabilidad: toda solicitud debe portar un identificador de correlación propagado entre componentes, y los percentiles de latencia deben estar instrumentados por operación. & Sin instrumentación, ninguno de los requisitos de rendimiento, disponibilidad ni concurrencia es verificable, y su declaración carecería de valor. & Revisión de los registros de una transacción completa siguiendo un único identificador de correlación. \\
+RNF-29 & Mantenibilidad paramétrica: modificar porcentajes de reembolso, ventanas de anticipación, penalidades o retenciones regulatorias no debe requerir cambio de código ni nuevo despliegue. & El marco aplicable ya demostró ser variable --- el numeral del RAC~3 sobre retracto se encuentra suspendido ---, de modo que la parametrización responde a un riesgo observado y no a una precaución teórica. & Modificación de un parámetro en la tabla de reglas tarifarias y comprobación del cambio de comportamiento sin redespliegue. \\
+RNF-30 & El proceso analítico no debe degradar la latencia transaccional ni bloquear escrituras del sistema de reservas. & Una consulta analítica sobre el primario compite por recursos con la ruta crítica de reserva justo en los picos de venta. & Medición del p95 transaccional durante una ejecución completa del ETL. \\
+\bottomrule
+\caption{RNF de auditabilidad y operación analítica.}
+\end{longtable}
+
+\subsection{Alcance de implementación de los requisitos no funcionales}
+Los requisitos anteriores describen el sistema tal como fue diseñado. La implementación de la Sección~\ref{sec:impl} es deliberadamente parcial y se ejecuta sobre un entorno educativo con restricciones conocidas de servicios, permisos y duración de sesión. La tabla siguiente declara, para cada requisito, su estado real de realización: \textbf{Implementado} (verificable ejecutando el prototipo), \textbf{Simulado} (sustituido por un componente equivalente en interfaz pero no en implementación), \textbf{Diseñado} (resuelto y documentado, sin realización en el prototipo) y \textbf{Excluido}.
+
+Esta declaración no atenúa los requisitos: la métrica permanece tal como fue formulada. Lo que se declara es la brecha entre diseño y prototipo, que es información de diseño y no una deficiencia encubierta.
+
+\begin{longtable}{@{}L{2.6cm} L{2.8cm} L{10.4cm}@{}}
+\toprule \textbf{Requisito} & \textbf{Estado} & \textbf{Justificación} \\ \midrule \endfirsthead
+\toprule \textbf{Requisito} & \textbf{Estado} & \textbf{Justificación} \\ \midrule \endhead
+RNF-06, RNF-07, RNF-08 & Implementado & Verificado con la prueba de concurrencia de la Sección~\ref{sec:impl}: 10 rondas de 50 peticiones sin sobreventa, rechazo 409 síncrono y ningún 5xx; el itinerario que falla en un tramo no deja sillas tomadas. \\
+RNF-03, RNF-04 & Implementado & La reserva y el rechazo se resuelven en la misma transacción corta; la suite completa, con las 10 rondas, tarda 2,61~s. \\
+RNF-01 & Implementado parcialmente & p95 de 83~ms con 20 clientes concurrentes (objetivo 300~ms), pero con carga muy inferior a los 800~QPS de la volumetría pico. \\
+RNF-02 & Diseñado & La API no construye itinerarios con escala en la búsqueda; las reservas con escala indican los vuelos de conexión. \\
+RNF-05 & Implementado & Índice \texttt{(route\_code, flight\_date)} sobre \texttt{flights}, usado por la búsqueda. \\
+RNF-09, RNF-17 & Excluido & El prototipo no tiene agencias, crédito ni autenticación B2B. \\
+RNF-10 & Diseñado & No hay clave de idempotencia; un reintento del cliente crea otra reserva. \\
+RNF-14 & Implementado & El esquema no tiene ninguna columna de tarjeta; \texttt{payments} guarda monto, proveedor, referencia y estado. \\
+RNF-16 & Implementado & La base analítica solo tiene agregados por ruta, clase y mes, sin datos personales ni de pago. \\
+RNF-18 & Implementado parcialmente & Almacenamiento de RDS cifrado y conexión a la base con SSL obligatorio; la API se expone por HTTP sin TLS, restringida por security group a la IP del equipo. \\
+RNF-23 & Diseñado & Las tablas analíticas implementadas son pequeñas (48 y 12 filas) y no se particionan. \\
+RNF-24, RNF-25, RNF-26 & Diseñado & No se implementa el registro de eventos; la reserva conserva \texttt{created\_at}, \texttt{updated\_at}, precio congelado por tramo y pago. \\
+RNF-29 & Implementado parcialmente & Los multiplicadores por clase y anticipación viven en \texttt{fare\_rules}; la matriz de reembolso no se implementa. \\
+RNF-30 & Implementado parcialmente & El ETL escribe en otra base y lee con consultas simples que no bloquean escrituras, pero lee del primario porque no hay réplica. \\
+Pasarela de pago & Simulado & Proveedor \texttt{SIMULADO} que aprueba en el mismo acto y devuelve una referencia; no hay autorización y captura en dos fases. \\
+RNF-11, RNF-12, RNF-13, RNF-20 & Diseñado & Exigen despliegue redundante, caché o ensayo de restauración. Se toman snapshot de RDS y volcados de las dos bases como respaldo, sin ensayo de RTO. \\
+RNF-19, RNF-21, RNF-22 & Diseñado & Se analizan en la Sección~\ref{sec:aws} (escenario $\times$10); no se ejecutó prueba de carga con la red ampliada. \\
+RNF-15, RNF-27 & Diseñado & Retención y supresión documentadas, sin ejecución. \\
+RNF-28 & Implementado parcialmente & Se mide el p95 con un script; no hay identificador de correlación. \\
+\bottomrule
+\caption{Estado de realización de los requisitos no funcionales en el prototipo.}
+\end{longtable}
+
+\nota{\textbf{Por qué se declara la brecha en lugar de ajustar la métrica.} Rebajar un requisito hasta que coincida con lo que el prototipo alcanza produce un documento coherente pero inútil: describiría el prototipo, no el sistema. Declarar la brecha conserva el diseño como referencia y hace explícito qué falta para llevarlo a producción, que es precisamente la información que un equipo receptor necesitaría.}
+
+% =====================================================================
+\section{Modelo entidad-relación}
+\label{sec:er}
+
+\subsection{Carácter provisional del modelo}
+El modelo de esta sección es la referencia de diseño previa a la implementación. La Sección 5.6 del enunciado advierte que los ajustes surgidos al implementar no son errores sino información valiosa, y el equipo asume que este modelo será modificado. Toda desviación posterior se declara explícitamente en la Sección~\ref{sec:impl}, con su motivo, en lugar de reescribir esta sección para simular que el diseño fue correcto desde el principio.
+
+\subsection{Decisiones de modelado y su justificación}
+
+\subsubsection{Itinerarios multi-trayecto: dos ejes de descomposición}
+La reserva se descompone por \textbf{dos ejes independientes}: segmentos de itinerario sobre el eje del vuelo y tiquetes sobre el eje del pasajero. Su intersección es el \textbf{cupón} (Sección~\ref{sec:reserva}).
+
+La necesidad de ambos ejes se demuestra por reducción: con solo segmentos no se puede cancelar a un pasajero de un grupo de tres, y con solo tiquetes no se puede atribuir ingreso por ruta en un itinerario con escala. Únicamente el cupón resuelve los dos casos, y por eso es el grano del hecho principal del modelo analítico.
+
+El \textbf{trayecto} (\texttt{journey\_number}) agrupa los segmentos de la ida y los del regreso. No se modela como entidad porque carece de atributos propios: un atributo discriminante cumple la función sin añadir una tabla. Su relevancia es funcional, ya que el MCT debe evaluarse solo entre segmentos del mismo trayecto.
+
+\subsubsection{Asignación de asiento: entidad propia con restricción declarativa}
+\texttt{seat\_assignment} tiene clave primaria \texttt{(flight\_instance\_id, seat\_number)} y unicidad sobre \texttt{coupon\_id}. Ambas son necesarias y ninguna implica la otra: la primera impide que un asiento tenga dos ocupantes, la segunda que un pasajero ocupe dos asientos.
+
+El criterio es el de RNF-25: la garantía reside en el motor, no en el código. Si el asiento fuese una columna del cupón, la unicidad exigiría una consulta previa a la escritura, y toda garantía que depende de consultar antes de insertar es una convención y no una restricción. Es también el mecanismo que resuelve la disputa de asiento en \emph{check-in} (RF-82).
+
+Una entidad separada aporta además dos propiedades. Las filas se crean solo al asignar: un mapa materializado por instancia supondría unos $180 \times 43.000 \approx 7{,}7$ millones de filas mayoritariamente vacías. Y la asignación tiene ciclo de vida propio --- origen en compra (L y PR) o en \emph{check-in} (XS, S y M), reasignación, liberación --- distinto del ciclo del cupón.
+
+Para que el motor valide que el asiento existe en el mapa de esa aeronave, la instancia replica el tipo de aeronave y la asignación declara una clave foránea compuesta contra \texttt{seat}. Es la redundancia D-05.
+
+\subsubsection{Vuelo programado frente a instancia de vuelo}
+\texttt{scheduled\_flight} es la plantilla comercial; \texttt{flight\_instance} es su ejecución en una fecha concreta, y de ella cuelgan inventario, segmentos y asignaciones.
+
+La instancia \textbf{copia} sus horarios ya resueltos en UTC en lugar de derivarlos en tiempo de consulta. La justificación es histórica: si el área comercial modifica el horario de la plantilla, las instancias vendidas deben conservar el horario con el que se vendieron. La instancia es un hecho ocurrido; el programado, una plantilla mutable. Derivar el horario reescribiría la historia, igual que lo haría una regla tarifaria sin versión temporal. Los horarios reales (SUP-56) se registran aparte y no sustituyen a los programados.
+
+\subsubsection{Control del inventario: dos niveles de contador}
+El control reside en \texttt{flight\_inventory}, con clave \texttt{(flight\_instance\_id, cabin)}, y no en el catálogo de asientos, ni en la reserva, ni en una agregación sobre cupones. Existe un segundo nivel, \texttt{fare\_bucket}, por clase tarifaria.
+
+No son redundantes porque responden preguntas distintas: la cabina responde si cabe un pasajero más (invariante duro, RN-01) y el \emph{bucket} a qué precio se le puede vender (asignación comercial, RN-02).
+
+\nota{\textbf{Regla de bloqueo.} Toda transacción de reserva bloquea primero la fila de \texttt{flight\_inventory} de la cabina y valida el \emph{bucket} \emph{dentro} de esa transacción. Bloquear solo el \emph{bucket} sería incorrecto: dos transacciones sobre clases distintas de la misma cabina se ejecutarían en paralelo sin observarse y podrían exceder conjuntamente la capacidad física. El \emph{bucket} no es un punto de serialización válido.}
+
+Fusionar ambos niveles repartiría el invariante duro entre las cinco filas de clase de la cabina, produciendo cinco puntos de contención donde hoy hay uno. Y derivar la ocupación por agregación sobre cupones se descarta porque no es serializable sin bloquear todas las filas agregadas y su costo crece con las ventas, justamente cuando más importa.
+
+Los bloqueos temporales son filas de \texttt{inventory\_hold} con expiración individual, y el contador de bloqueados se mantiene materializado. Ello impone dos obligaciones: \emph{hold} y contador se escriben en la misma transacción, y la conciliación de RNF-26 verifica esa correspondencia.
+
+\subsubsection{Justificación de la entidad \texttt{aircraft}}
+El enunciado incluye \emph{Aircraft} en su lista mínima y el modelo la conserva, pero conviene precisar su función. La capacidad y el mapa de asientos derivan del \emph{tipo} (SUP-02), de modo que la matrícula \textbf{no participa en el invariante de inventario ni en ninguna decisión de venta}. Su función es de trazabilidad operativa: saber qué aeronave ejecutó cada instancia, dato necesario para conciliar con mantenimiento y operaciones, ambos fuera de alcance (EXC-02, EXC-03). Se conserva por ser un punto de extensión de costo nulo y porque su ausencia impediría representar un cambio de equipo.
+
+\subsubsection{Nivel de normalización}
+El OLTP se diseña en tercera forma normal con cinco desnormalizaciones declaradas (Sección~\ref{sec:desnorm}); el OLAP, en esquema en estrella (Sección~\ref{sec:estrella}).
+
+La pregunta del enunciado sugiere que un mismo modelo debería equilibrar ambos propósitos. El equipo sostiene lo contrario: \textbf{el modelo transaccional no se desnormaliza para facilitar el \emph{pipeline} analítico}. La normalización del OLTP responde a la integridad bajo escritura concurrente y la desnormalización del OLAP a la eficiencia de lectura agregada; son objetivos opuestos, y un modelo único los satisface mal a ambos. El costo de la traducción lo asume el ETL, cuya única función es esa. Las desnormalizaciones que sí existen se justifican por concurrencia o preservación histórica, nunca por conveniencia analítica.
+
+\subsection{Catálogo de entidades}
+\begin{longtable}{@{}L{2.6cm} L{3.6cm} L{9.6cm}@{}}
+\toprule \textbf{Bloque} & \textbf{Entidad} & \textbf{Propósito} \\ \midrule \endfirsthead
+\toprule \textbf{Bloque} & \textbf{Entidad} & \textbf{Propósito} \\ \midrule \endhead
+Geografía y flota
+ & \texttt{airport} & Catálogo de aeropuertos con código IATA y zona horaria IANA. \\
+ & \texttt{route} & Par ordenado origen--destino con su clasificación nacional o internacional. \\
+ & \texttt{aircraft\_type} & Tipo de aeronave del que se derivan capacidad por cabina y mapa de asientos. \\
+ & \texttt{aircraft} & Matrícula individual asignada a una instancia. Trazabilidad operativa. \\
+ & \texttt{seat} & Catálogo de asientos por tipo de aeronave, con su cabina. \\
+\midrule
+Tarifas
+ & \texttt{fare\_class} & Las cinco clases tarifarias, su cabina y su ventana de anticipación. \\
+ & \texttt{fare\_rule} & Reglas de reembolso y cambio, versionadas temporalmente. \\
+\midrule
+Programación
+ & \texttt{scheduled\_flight} & Plantilla comercial recurrente. \\
+ & \texttt{flight\_instance} & Ejecución de la plantilla en una fecha concreta. \\
+\midrule
+Inventario
+ & \texttt{flight\_inventory} & Contadores por cabina. Punto único de serialización del invariante. \\
+ & \texttt{fare\_bucket} & Cupo autorizado y vendido por clase tarifaria. \\
+ & \texttt{inventory\_hold} & Bloqueo temporal de cupo con marca de expiración. \\
+ & \texttt{seat\_assignment} & Asignación de asiento físico a un cupón. \\
+\midrule
+Reserva
+ & \texttt{reservation} & Transacción comercial. Localizador y estado vigente. \\
+ & \texttt{itinerary\_segment} & Tramo del itinerario, con su trayecto y su clase tarifaria. \\
+ & \texttt{passenger} & Datos del pasajero. \\
+ & \texttt{ticket} & Documento por pasajero dentro de una reserva. \\
+ & \texttt{coupon} & Pasajero por segmento. Grano atómico y portador del precio congelado. \\
+\midrule
+Dinero
+ & \texttt{payment} & Transacción con la pasarela; token y estado, nunca datos de tarjeta. \\
+ & \texttt{refund} & Reembolso calculado y su seguimiento hasta la devolución efectiva. \\
+\midrule
+Agencias
+ & \texttt{agency} & Agencia aliada y sus credenciales de acceso. \\
+ & \texttt{agency\_commission} & Porcentaje de comisión por agencia y clase, versionado. \\
+ & \texttt{agency\_credit} & Línea de crédito rotativa. Segundo recurso disputado. \\
+ & \texttt{credit\_movement} & Débitos y restituciones sobre la línea de crédito. \\
+\midrule
+Auditoría & \texttt{reservation\_event} & Registro inmutable de transiciones de estado de reserva y de cupón. \\
+\bottomrule
+\caption{Catálogo de entidades del modelo transaccional.}
+\end{longtable}
+
+\subsection{Diccionario de datos}
+Se indican los atributos determinantes de cada entidad. Los atributos administrativos comunes (\texttt{created\_at}, \texttt{updated\_at}) se omiten por brevedad y se asumen presentes en todas las entidades salvo en \texttt{reservation\_event}, que por su carácter de solo anexado carece de marca de actualización.
+
+\begin{longtable}{@{}L{3.0cm} L{6.6cm} L{6.2cm}@{}}
+\toprule \textbf{Entidad} & \textbf{Atributos determinantes} & \textbf{Reglas y restricciones} \\ \midrule \endfirsthead
+\toprule \textbf{Entidad} & \textbf{Atributos determinantes} & \textbf{Reglas y restricciones} \\ \midrule \endhead
+\texttt{airport} & \underline{iata\_code}, icao\_code, name, city, country, tz\_iana & La zona horaria IANA es obligatoria: sin ella el cálculo de conexiones falla estacionalmente (SUP-09). \\
+\texttt{route} & \underline{route\_id}, origin\_iata, destination\_iata, scope, mct\_minutes & \texttt{scope} $\in$ \{NACIONAL, INTERNACIONAL\}; determina IVA y plazos de retracto. \texttt{UNIQUE(origin, destination)}. \\
+\texttt{aircraft\_type} & \underline{aircraft\_type\_id}, model, capacity\_economy, capacity\_premium & La suma define la capacidad total. Proporción aproximada 80/20 (SUP-01). \\
+\texttt{aircraft} & \underline{tail\_number}, aircraft\_type\_id, status & Trazabilidad operativa. La capacidad se deriva del tipo, no de la matrícula (SUP-02). \\
+\texttt{seat} & \underline{aircraft\_type\_id}, \underline{seat\_number}, cabin, row, letter & Catálogo estático por tipo (SUP-03). Clave primaria compuesta, referenciada por \texttt{seat\_assignment}. \\
+\texttt{fare\_class} & \underline{fare\_class\_id}, code, cabin, rank, advance\_days\_min, is\_promotional & \texttt{code} $\in$ \{XS, S, M, L, PR\}. \texttt{rank} ordena por precio. \texttt{advance\_days\_min} implementa la ventana de anticipación (SUP-14). \\
+\texttt{fare\_rule} & \underline{fare\_class\_id}, \underline{valid\_from}, valid\_to, refund\_pct\_gt24h, refund\_pct\_lt24h, refund\_pct\_noshow, change\_penalty, is\_changeable & Versionada temporalmente. \texttt{valid\_to} nulo indica versión vigente. El reembolso se calcula con la versión referenciada por el cupón, no con la vigente (SUP-32). \\
+\texttt{scheduled\_flight} & \underline{scheduled\_flight\_id}, flight\_number, route\_id, dep\_time\_local, arr\_time\_local, days\_of\_week, valid\_from, valid\_to, aircraft\_type\_id & Plantilla mutable. Los cambios no afectan instancias ya materializadas. \\
+\texttt{flight\_instance} & \underline{flight\_instance\_id}, scheduled\_flight\_id, service\_date, dep\_utc, arr\_utc, actual\_dep\_utc, actual\_arr\_utc, aircraft\_type\_id, tail\_number, status & \texttt{UNIQUE(scheduled\_flight\_id, service\_date)}. Horarios y tipo de aeronave copiados (D-04 y D-05). \texttt{status} $\in$ \{PROGRAMADA, VENTA\_CERRADA, CERRADA\}. Los horarios reales son nulos hasta que ocurren (SUP-56). Índice sobre \texttt{(route\_id, service\_date)} para RNF-05. \\
+\texttt{flight\_inventory} & \underline{flight\_instance\_id}, \underline{cabin}, capacity, sold, held & \textbf{Invariante RN-01:} \texttt{sold + held $\le$ capacity}. Punto único de bloqueo. Contadores materializados (D-01). \\
+\texttt{fare\_bucket} & \underline{flight\_instance\_id}, \underline{fare\_class\_id}, authorized, sold, price\_base & \textbf{Invariante RN-02:} la suma de \texttt{authorized} por cabina no excede su capacidad. No es punto de bloqueo válido. \\
+\texttt{inventory\_hold} & \underline{hold\_id}, flight\_instance\_id, cabin, fare\_class\_id, reservation\_id, units, expires\_at & Creado en la misma transacción que incrementa \texttt{held}. Índice parcial sobre \texttt{expires\_at} para el barrido (RF-18). \\
+\texttt{seat\_assignment} & \underline{flight\_instance\_id}, \underline{seat\_number}, aircraft\_type\_id, coupon\_id, assigned\_at, origin & \texttt{UNIQUE(coupon\_id)} impide dos asientos por pasajero. FK compuesta \texttt{(aircraft\_type\_id, seat\_number)} hacia \texttt{seat}. \texttt{origin} $\in$ \{COMPRA, CHECKIN\}. \\
+\texttt{reservation} & \underline{reservation\_id}, locator, channel, agency\_id, contact\_email, current\_status, idempotency\_key, created\_at & \texttt{locator} alfanumérico de 6 caracteres, único. \texttt{current\_status} es proyección derivada (D-02). \texttt{UNIQUE(idempotency\_key)} soporta RF-30. \\
+\texttt{itinerary\_segment} & \underline{segment\_id}, reservation\_id, journey\_number, segment\_order, flight\_instance\_id, fare\_class\_id & \texttt{journey\_number}: 1 ida, 2 regreso (SUP-10). El MCT solo se valida entre segmentos del mismo trayecto. \texttt{UNIQUE(reservation\_id, journey\_number, segment\_order)}. \\
+\texttt{passenger} & \underline{passenger\_id}, document\_type, document\_number, first\_name, last\_name, birth\_date, nationality & Datos personales sujetos a la Ley 1581 (SUP-50). Nunca se replican sin seudonimizar al modelo analítico. \\
+\texttt{ticket} & \underline{ticket\_id}, reservation\_id, passenger\_id, ticket\_number, status & Un tiquete por pasajero y reserva. El importe total es derivado de sus cupones. \\
+\texttt{coupon} & \underline{coupon\_id}, ticket\_id, segment\_id, status, fare\_class\_id, fare\_rule\_valid\_from, price\_base, taxes, fees, currency & \texttt{UNIQUE(ticket\_id, segment\_id)}. Portador del precio congelado (D-03) y del puntero a la versión de regla tarifaria aplicable. \texttt{status} $\in$ \{EMITIDO, CHECKED\_IN, VOLADO, CANCELADO, REEMBOLSADO, NO\_SHOW, CONEXION\_PERDIDA\}. \\
+\texttt{payment} & \underline{payment\_id}, reservation\_id, gateway\_txn\_id, token, amount, status, authorized\_at, captured\_at, fx\_rate, fx\_at & Nunca almacena el número de tarjeta (RN-14). Las marcas de autorización y captura separadas soportan el esquema de dos fases (RF-26). \texttt{fx\_rate} congela la tasa aplicada (SUP-17). \\
+\texttt{refund} & \underline{refund\_id}, coupon\_id, reason, base\_amount, refund\_pct, refund\_amount, regulatory\_floor\_applied, status, requested\_at, settled\_at & \texttt{reason} $\in$ \{COMERCIAL, DESISTIMIENTO, RETRACTO\}. \texttt{regulatory\_floor\_applied} deja traza de cuándo prevaleció el mínimo legal (RN-09). \\
+\texttt{agency} & \underline{agency\_id}, name, nit, api\_key\_hash, status & La credencial se persiste como resumen criptográfico, nunca en claro. \\
+\texttt{agency\_commission} & \underline{agency\_id}, \underline{fare\_class\_id}, \underline{valid\_from}, pct & Versionada, por el mismo motivo que \texttt{fare\_rule}: la liquidación debe reproducir la comisión vigente en la venta. \\
+\texttt{agency\_credit} & \underline{agency\_id}, credit\_limit, used & \textbf{Invariante SUP-44:} \texttt{used $\le$ credit\_limit}. Segundo recurso bloqueable; se adquiere siempre después del inventario (SUP-45). \\
+\texttt{credit\_movement} & \underline{movement\_id}, agency\_id, reservation\_id, type, amount, occurred\_at & \texttt{type} $\in$ \{DEBITO, RESTITUCION, AJUSTE\}. Solo anexado; soporta la conciliación de RF-69. \\
+\texttt{reservation\_event} & \underline{event\_id}, reservation\_id, coupon\_id, entity\_type, from\_status, to\_status, occurred\_at, actor, channel, reason & Solo anexado. \texttt{entity\_type} $\in$ \{RESERVA, CUPON\}. Fuente de la métrica de patrones de cancelación (SUP-48) y de la reconstrucción de RNF-26. \\
+\bottomrule
+\caption{Diccionario de datos. Los atributos subrayados forman la clave primaria.}
+\end{longtable}
+
+\subsection{Desnormalizaciones deliberadas}
+\label{sec:desnorm}
+Las siguientes cinco decisiones se apartan de la tercera forma normal. Se declaran de forma explícita, con su motivo, en lugar de presentar el modelo como un 3FN puro que no lo es.
+
+\begin{longtable}{@{}L{1.2cm} L{4.8cm} L{3.0cm} L{6.8cm}@{}}
+\toprule \textbf{ID} & \textbf{Desnormalización} & \textbf{Naturaleza} & \textbf{Justificación} \\ \midrule \endfirsthead
+\toprule \textbf{ID} & \textbf{Desnormalización} & \textbf{Naturaleza} & \textbf{Justificación} \\ \midrule \endhead
+D-01 & Contadores \texttt{sold} y \texttt{held} en \texttt{flight\_inventory}, derivables de cupones y \emph{holds}. & Concurrencia & Ofrece un punto de serialización único y de costo constante por cabina. La agregación equivalente no es serializable sin bloquear todas las filas agregadas, y su costo crece con las ventas. Impone la conciliación de RNF-26. \\
+D-02 & \texttt{current\_status} en \texttt{reservation}, derivable de \texttt{reservation\_event}. & Rendimiento de lectura & Evita reconstruir el estado en cada consulta posventa. La fuente de verdad sigue siendo el registro de eventos, y RNF-26 concilia ambos diariamente. \\
+D-03 & Componentes de precio congelados en \texttt{coupon}. & Preservación histórica & El precio depende del \emph{bucket} y de la ventana vigentes en la compra, ambos mutables. Sin instantánea no es posible calcular un reembolso ni auditar un cobro. Reside en el cupón y no en el tiquete porque los segmentos de un itinerario pueden venderse en clases y precios distintos. \\
+D-04 & Horarios UTC copiados en \texttt{flight\_instance}. & Preservación histórica & La instancia es un hecho ocurrido y el programado una plantilla mutable. Derivar el horario en tiempo de consulta reescribiría el horario con el que se vendió la reserva. \\
+D-05 & \texttt{aircraft\_type\_id} replicado en \texttt{flight\_instance}. & Integridad declarativa & Habilita la clave foránea compuesta de \texttt{seat\_assignment} hacia el catálogo \texttt{seat}, de modo que el motor rechace un asiento inexistente en el mapa de esa aeronave. Sin ella, la validación recaería en el código de aplicación. \\
+\bottomrule
+\caption{Desnormalizaciones del modelo transaccional.}
+\end{longtable}
+
+\subsection{Diagrama entidad-relación}
+El diagrama emplea notación Crow's Foot de forma consistente. Su código fuente se mantiene en el repositorio en formato textual, lo que permite versionarlo junto con el esquema de base de datos y regenerar la imagen ante cualquier cambio del modelo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{diagrama-er.png}
+\caption{Modelo entidad-relación del sistema transaccional (notación Crow's Foot).}
+\label{fig:er}
+\end{figure}
+
+\nota{\textbf{Cómo leer el diagrama.} \texttt{COUPON} recibe dos relaciones obligatorias, una desde \texttt{TICKET} y otra desde \texttt{ITINERARY\_SEGMENT}: esa doble dependencia es la representación gráfica de los dos ejes de descomposición y el rasgo distintivo del modelo. La segunda lectura relevante es que \texttt{FLIGHT\_INVENTORY} depende únicamente de \texttt{FLIGHT\_INSTANCE} y de nada más: el invariante de inventario no se ve afectado por ninguna entidad del bloque de reserva, y esa independencia es lo que permite serializar el acceso sobre una sola fila.}
+
+\subsection{Modelo analítico en estrella}
+\label{sec:estrella}
+El modelo analítico se deriva del transaccional mediante el proceso ETL y no comparte su estructura. Tres tablas de hechos, cada una con el grano exigido por su pregunta de negocio.
+
+\begin{longtable}{@{}L{4.4cm} L{3.2cm} L{7.4cm}@{}}
+\toprule \textbf{Tabla} & \textbf{Grano} & \textbf{Contenido y propósito} \\ \midrule \endfirsthead
+\toprule \textbf{Tabla} & \textbf{Grano} & \textbf{Contenido y propósito} \\ \midrule \endhead
+\texttt{fact\_coupon} & Un cupón & Precio base prorrateado, impuestos, comisión e ingreso neto, más el estado terminal. Responde ocupación por ruta e ingresos por tarifa sin doble conteo. Particionada por fecha de servicio (RNF-23). \\
+\texttt{fact\_reservation\_event} & Una transición de estado & Marca de tiempo, estados origen y destino, tipo de entidad y el intervalo transcurrido desde la confirmación. Responde patrones de cancelación. Particionada por fecha del evento. \\
+\texttt{fact\_inventory\_snapshot} & Instancia $\times$ cabina $\times$ clase $\times$ día & Instantánea diaria de \texttt{authorized}, \texttt{sold} y \texttt{held}, con los días restantes hasta la salida. Es una tabla de acumulación periódica y la única fuente que permite reconstruir la \textbf{curva de reservas}: cómo se acumulan las ventas en los días previos al vuelo. Sin ella no es evaluable si los cupos por clase están bien dimensionados, que es la palanca comercial que \texttt{fare\_bucket} materializa. \\
+\texttt{dim\_date} & Un día & Calendario con marcado de temporada alta colombiana. \\
+\texttt{dim\_route} & Una ruta & Origen, destino, alcance nacional o internacional. \\
+\texttt{dim\_flight} & Una instancia & Fecha de servicio, número de vuelo, tipo de aeronave, capacidad. \\
+\texttt{dim\_fare\_class} & Una clase & Código, cabina, carácter promocional. Dimensión de cambio lento tipo 2, coherente con el versionado de \texttt{fare\_rule} en el origen. \\
+\texttt{dim\_channel} & Un canal & Directo o agencia. \\
+\texttt{dim\_agency} & Una agencia & Identificación comercial. \\
+\texttt{dim\_passenger} & Un pasajero & Identificador seudonimizado y atributos no identificantes. Nunca contiene datos personales directos (RNF-16). \\
+\bottomrule
+\caption{Esquema en estrella del modelo analítico.}
+\end{longtable}
+
+\subsubsection{Claves, particionado y prorrateo}
+Tres decisiones adicionales que el diseño del destino exige y que el origen no determina.
+
+\textbf{Claves sustitutas.} Las dimensiones emplean claves sustitutas enteras y no las claves naturales del OLTP. Es lo que permite que \texttt{dim\_fare\_class} sea de cambio lento tipo 2: una misma clase tarifaria puede tener varias versiones vigentes en distintos periodos, igual que \texttt{fare\_rule} en el origen. Versionar en el origen y no decidir qué ocurre en el destino sería incoherente.
+
+\textbf{Particionado.} \texttt{fact\_coupon} crece del orden de 5{,}5~millones de filas anuales. Se particiona por fecha de servicio, lo que hace que tanto la recarga de la partición reciente exigida por SUP-51 como las consultas acotadas por periodo accedan únicamente a las particiones afectadas. Sin particionado, RNF-22 deja de ser alcanzable en cuanto el histórico crece.
+
+\textbf{Prorrateo tarifario.} En una red radial, una parte considerable del ingreso corresponde a itinerarios de dos segmentos. La atribución de ingreso por ruta exige repartir el precio del itinerario entre sus segmentos, y el modelo lo resuelve por construcción: la cotización se realiza por segmento (RF-11) y el precio se congela en el cupón (D-03), de modo que cada segmento porta ya su propia porción de tarifa base, impuestos y tasas. No se aplica ningún reparto proporcional posterior en el ETL, y no existe por tanto ambigüedad de atribución. Cuando el itinerario se comercialice como paquete con descuento --- escenario fuera del alcance actual --- el descuento deberá repartirse en proporción a la tarifa base de cada segmento, y esa regla se declara aquí de antemano.
+
+% =====================================================================
+\section{Arquitectura de backend}
+\label{sec:backend}
+
+\subsection{El criterio que gobierna la descomposición}
+La discusión habitual entre monolito y servicios separados suele plantearse en términos de dominio funcional. El equipo sostiene que en este sistema ese eje es el equivocado, y adopta un criterio distinto y único:
+
+\nota{\textbf{Regla de la frontera transaccional.} Una frontera de servicio no puede atravesar una transacción. Todo aquello que deba comprometerse o revertirse de forma conjunta reside en el mismo proceso y sobre la misma base de datos. Todo lo demás puede separarse libremente.}
+
+La regla se deriva directamente de RNF-08. Una reserva de ida y vuelta con escala compromete hasta cuatro filas de \texttt{flight\_inventory}, y si el canal es de agencia, además una fila de \texttt{agency\_credit}: cinco recursos que deben adquirirse o liberarse de forma atómica. Sobre una única base de datos eso es una transacción ACID. Repartidos entre servicios autónomos con almacenamiento propio, exigiría una saga con compensación, y una saga no proporciona atomicidad sino atomicidad eventual: durante la ventana de compensación el inventario permanece en un estado que no corresponde a ninguna venta.
+
+Esa consecuencia es inadmisible aquí por una razón específica. Al haberse descartado la sobreventa (SUP-20), no existe margen que absorba una inconsistencia temporal: cada cupo comprometido de más se materializa como una denegación de embarque. \textbf{Fragmentar el núcleo transaccional obligaría a relajar precisamente la propiedad declarada como la más crítica del sistema.}
+
+\subsection{Descomposición resultante}
+La arquitectura resultante no es un monolito ni un conjunto de microservicios puros: es un \textbf{conjunto de cuatro servicios desplegables de forma independiente, con un núcleo transaccional indivisible}. Esa asimetría es deliberada y constituye la respuesta directa a la pregunta del enunciado. La separación no es funcional sino \textbf{por perfil de acceso}: la volumetría de la Sección~\ref{sec:volumetria} muestra aproximadamente 800~QPS de lectura frente a 15~TPS de escritura, con requisitos de consistencia opuestos.
+
+\begin{longtable}{@{}L{3.2cm} L{2.0cm} L{4.6cm} L{5.4cm}@{}}
+\toprule \textbf{Servicio} & \textbf{Perfil} & \textbf{Responsabilidad} & \textbf{NFR que sustenta la decisión} \\ \midrule \endfirsthead
+\toprule \textbf{Servicio} & \textbf{Perfil} & \textbf{Responsabilidad} & \textbf{NFR que sustenta la decisión} \\ \midrule \endhead
+\texttt{gateway} & Sin estado & Enrutamiento, terminación TLS, autenticación, límite de tasa por agencia, versionado de API. & RNF-17 (aislamiento entre agencias) y RNF-18 (TLS). Concentra las políticas de acceso en un solo punto. \\
+\texttt{search} & Solo lectura & Búsqueda de vuelos directos y con escala, validación de MCT, cotización. & RNF-01, RNF-02, RNF-19. Es el 99\,\% del tráfico y el único componente que no participa del invariante, por lo que escala horizontalmente sin restricción. \\
+\texttt{core} & Escritura & Inventario, bloqueos, reservas, cupones, pagos, crédito de agencia, reembolsos, registro de eventos. & RNF-06 a RNF-10. Es el núcleo indivisible: sus operaciones comparten transacción. \\
+\texttt{analytics} & Lote & Extracción incremental, recarga de particiones, transformación y carga hacia la base analítica. & RNF-22 y RNF-30. Aislado del camino transaccional por construcción. \\
+\bottomrule
+\caption{Servicios del \emph{backend} y requisito no funcional que justifica su frontera.}
+\end{longtable}
+
+Tres de los cuatro servicios se separan; únicamente \texttt{core} se mantiene íntegro. La frontera de sus módulos internos (\texttt{inventory}, \texttt{booking}, \texttt{payment}, \texttt{agency}) se traza en el lugar donde pasaría el corte si en el futuro el volumen justificara extraerlos, de modo que la decisión sea reversible. El candidato natural a extraerse primero no es ninguno de ellos sino \texttt{search}, que ya está separado precisamente por no participar del invariante.
+
+\nota{\textbf{Límite explícito del \texttt{gateway}.} El \texttt{gateway} enruta, autentica y limita; no conoce el flujo de reserva. Si coordinara pasos de negocio entre servicios --- invocar inventario, después pagos, compensar ante fallo --- se habría convertido en un coordinador de transacciones distribuidas, reintroduciendo por otra vía la saga que la regla de la frontera transaccional descarta. Una petición de reserva se entrega completa a \texttt{core}.}
+
+\subsection{Diseño de acceso a datos}
+Los presupuestos de latencia de RNF-01 y RNF-02 no son sostenibles sin un plan de acceso declarado. Un requisito de rendimiento sin diseño de índices es aspiracional, no verificable.
+
+\begin{longtable}{@{}L{5.4cm} L{4.2cm} L{5.6cm}@{}}
+\toprule \textbf{Índice} & \textbf{Tabla} & \textbf{Consulta que habilita} \\ \midrule \endfirsthead
+\toprule \textbf{Índice} & \textbf{Tabla} & \textbf{Consulta que habilita} \\ \midrule \endhead
+\texttt{(route\_id, service\_date, status)} & \texttt{flight\_instance} & Búsqueda directa por origen, destino y fecha. Es el índice de mayor impacto del sistema. \\
+\texttt{(service\_date, arr\_utc)} sobre instancias con llegada a BOG y \texttt{(service\_date, dep\_utc)} sobre las de salida & \texttt{flight\_instance} & Construcción de combinaciones con escala y filtrado por MCT sin recorrido secuencial. \\
+\texttt{(flight\_instance\_id)} con condición \texttt{authorized > sold} & \texttt{fare\_bucket} & Cotización: descarta de inmediato las clases agotadas de cada candidato. \\
+Índice parcial sobre \texttt{expires\_at} & \texttt{inventory\_hold} & Barrido de bloqueos expirados (RF-18) sin escanear la tabla. \\
+\texttt{(reservation\_id, occurred\_at)} & \texttt{reservation\_event} & Reconstrucción cronológica del histórico (RF-68) y conciliación de RNF-26. \\
+\texttt{(event\_id)} como clave ascendente & \texttt{reservation\_event} & Extracción incremental por marca de agua (RF-71). \\
+\bottomrule
+\caption{Índices requeridos y consulta que cada uno habilita.}
+\end{longtable}
+
+\subsection{Mecanismo de control de concurrencia}
+
+\subsubsection{Distinción previa}
+Dos mecanismos con nombres parecidos operan en escalas de tiempo incomparables, y confundirlos invalida cualquier análisis de esta subsección:
+
+\begin{itemize}
+  \item El \textbf{bloqueo de base de datos} protege el contador de \texttt{flight\_inventory} y dura microsegundos.
+  \item El \textbf{bloqueo temporal de 15 minutos} es una \emph{fila} en \texttt{inventory\_hold} con marca de expiración. No es un bloqueo del motor y no mantiene ninguna transacción abierta.
+\end{itemize}
+
+En ningún momento existe una transacción de base de datos viva durante el proceso de pago. La existencia de \texttt{inventory\_hold} es precisamente lo que permite liberar el bloqueo del motor mientras se espera la respuesta de un tercero.
+
+\subsubsection{Mecanismo elegido y alternativas descartadas}
+El equipo adopta \textbf{bloqueo pesimista} mediante \texttt{SELECT \ldots FOR UPDATE} sobre la fila de \texttt{flight\_inventory} correspondiente a la tupla \texttt{(flight\_instance\_id, cabin)}, con nivel de aislamiento \texttt{READ COMMITTED}.
+
+\begin{longtable}{@{}L{3.4cm} L{5.6cm} L{6.4cm}@{}}
+\toprule \textbf{Alternativa} & \textbf{Comportamiento en este sistema} & \textbf{Motivo del descarte} \\ \midrule \endfirsthead
+\toprule \textbf{Alternativa} & \textbf{Comportamiento en este sistema} & \textbf{Motivo del descarte} \\ \midrule \endhead
+Optimista con reintentos & El conflicto de versión solo se produce sobre los últimos cupos de un vuelo, que es exactamente el escenario de máxima disputa. En itinerarios de varios segmentos, un conflicto en el segundo obliga a rehacer la adquisición de todos. & Produce una acumulación de reintentos justo en el caso crítico, y el rechazo deja de ser determinístico e inmediato, incumpliendo RNF-04 y RNF-07. \\
+Cola serializadora por vuelo & Un itinerario de cuatro segmentos requeriría coordinar cuatro colas distintas, y la atomicidad entre ellas solo se recupera mediante saga con compensación. & Reintroduce la transacción distribuida que la regla de la frontera descarta, y la respuesta pasa a ser un acuse asíncrono, incompatible con el rechazo síncrono que exige RNF-07. \\
+Pesimista con \texttt{FOR UPDATE} & Un único punto de serialización por cabina, atomicidad nativa entre inventario y crédito, y rechazo síncrono dentro del presupuesto de latencia. & \textbf{Adoptado.} \\
+\bottomrule
+\caption{Comparación de mecanismos de control de concurrencia.}
+\end{longtable}
+
+La viabilidad del bloqueo pesimista se sustenta en la volumetría: con aproximadamente 15~TPS distribuidos entre unas 43.000 instancias vivas, la probabilidad de que dos transacciones disputen la misma fila es baja salvo sobre los últimos cupos de un vuelo concreto, que es el caso que la prueba de RNF-06 debe reproducir deliberadamente.
+
+\subsubsection{Parámetros y disciplina de adquisición}
+\begin{longtable}{@{}L{4.0cm} L{4.4cm} L{6.8cm}@{}}
+\toprule \textbf{Parámetro} & \textbf{Valor} & \textbf{Justificación} \\ \midrule \endfirsthead
+\toprule \textbf{Parámetro} & \textbf{Valor} & \textbf{Justificación} \\ \midrule \endhead
+Nivel de aislamiento & \texttt{READ COMMITTED} con \texttt{FOR UPDATE} explícito & \texttt{SERIALIZABLE} aborta las transacciones en conflicto con error de serialización y obliga a implementar reintentos, reintroduciendo el inconveniente del mecanismo optimista con la complejidad de ambos. \\
+\texttt{lock\_timeout} & 3 segundos & Sin límite de espera, bajo contención se forma una cola de esperadores y el p95 de RNF-03 se degrada. Con él, la espera excesiva se convierte en el rechazo determinístico que exige RNF-07. Es la traducción directa de un requisito no funcional en un parámetro de configuración. \\
+Orden de adquisición & Inventario ascendente por \texttt{flight\_instance\_id}; \texttt{agency\_credit} siempre en último lugar & Un orden total sobre ambas familias de recursos es la única forma de evitar el interbloqueo entre transacciones cruzadas (SUP-45, RF-37). Debe respetarse en todos los caminos de código, no solo en el flujo sin errores. \\
+Validación del \emph{bucket} & Dentro del bloqueo de cabina & El \emph{bucket} no es punto de serialización válido: dos transacciones sobre clases distintas de la misma cabina podrían exceder conjuntamente la capacidad física (Sección~\ref{sec:er}). \\
+\bottomrule
+\caption{Parámetros del mecanismo de concurrencia.}
+\end{longtable}
+
+\subsection{Integración del flujo de pago}
+
+\subsubsection{Reparto de responsabilidades}
+El instrumento de pago se delega íntegramente al proveedor externo; la máquina de estados de la reserva permanece en su totalidad dentro de \texttt{core}. La pasarela no adopta ninguna decisión de negocio: únicamente responde si autoriza o rechaza. Esta separación reduce el alcance de cumplimiento a SAQ-A (RNF-14) sin ceder control sobre el ciclo de vida de la reserva.
+
+\subsubsection{Autorización y captura en dos fases}
+Se adopta el esquema de \textbf{dos fases}: autorización al inicio, que retiene fondos sin cobrarlos, y captura únicamente después de confirmada la reserva. La alternativa de captura directa con reembolso posterior ante fallo es más simple en número de llamadas, pero admite un escenario en que se cobra sin entregar reserva, lo que activaría el procedimiento regulatorio de reembolso con plazo de 30 días por un defecto atribuible al propio sistema.
+
+\subsubsection{Secuencia y ubicación de las transacciones}
+La invocación de la pasarela \textbf{nunca ocurre dentro de la transacción que sostiene el bloqueo de inventario}. Una llamada de red dentro de un bloqueo del motor mantendría serializado el vuelo durante toda la latencia del tercero, degradando el sistema completo. La secuencia consta de dos transacciones breves separadas por la llamada externa:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{diagrama-secuencia.png}
+\caption{Secuencia del flujo de reserva y pago en el canal directo. Las dos transacciones de base de datos duran milisegundos y la invocación de la pasarela ocurre entre ambas, nunca dentro de ninguna.}
+\label{fig:secuencia}
+\end{figure}
+
+\subsubsection{Modos de falla previstos}
+\begin{longtable}{@{}L{4.6cm} L{4.6cm} L{6.0cm}@{}}
+\toprule \textbf{Escenario} & \textbf{Consecuencia} & \textbf{Tratamiento} \\ \midrule \endfirsthead
+\toprule \textbf{Escenario} & \textbf{Consecuencia} & \textbf{Tratamiento} \\ \midrule \endhead
+El bloqueo expira antes de recibir la autorización & El cupo ya fue liberado y podría estar vendido a otro pasajero. & Se rechaza la confirmación y se ordena la liberación de la autorización ante la pasarela (RF-29). \\
+La pasarela autoriza pero la transacción~2 falla & Fondos retenidos sin reserva confirmada. & Rutina periódica de conciliación que localiza autorizaciones sin reserva asociada y las revierte. Es un proceso, no una cláusula. \\
+La notificación asíncrona llega duplicada o fuera de orden & Riesgo de doble confirmación o de regresión de estado. & El consumidor es idempotente y descarta eventos anteriores al último procesado (SUP-31). \\
+Reintento del cliente ante \emph{timeout} & Riesgo de doble reserva y, en canal de agencia, de doble débito. & Clave de idempotencia con unicidad en \texttt{reservation}; se devuelve el resultado original (RF-30, RNF-10). \\
+\bottomrule
+\caption{Modos de falla del flujo de pago y su tratamiento.}
+\end{longtable}
+
+\subsection{Exposición de servicios a las agencias}
+\textbf{API separada sobre núcleo compartido.} La separación no responde a comodidad de diseño: SUP-42 establece que las agencias compiten por el mismo inventario que el canal directo, de modo que \textbf{compartir el servicio de inventario es obligatorio}. Un segundo camino de escritura hacia el mismo contador constituiría un segundo lugar donde el invariante podría romperse, y multiplicaría la superficie que la prueba de RNF-06 debería cubrir.
+
+\begin{longtable}{@{}L{4.2cm} L{5.2cm} L{5.8cm}@{}}
+\toprule \textbf{Aspecto} & \textbf{Canal directo} & \textbf{Canal de agencia} \\ \midrule \endfirsthead
+\toprule \textbf{Aspecto} & \textbf{Canal directo} & \textbf{Canal de agencia} \\ \midrule \endhead
+Superficie de API & \texttt{/api/v1/\ldots} & \texttt{/api/b2b/v1/\ldots}, versionada de forma independiente \\
+Autenticación & Sesión de usuario final & Credencial de cliente por agencia (SUP-39) \\
+Límite de tasa & Por dirección de origen & Por agencia, con cuota contratada \\
+Liquidación & Pasarela de pago en dos fases & Débito de línea de crédito dentro de la transacción de confirmación \\
+Precio & Precio de venta al público & Mismo precio; la comisión afecta el ingreso neto, no el importe cobrado (SUP-41) \\
+Visibilidad & Reservas propias del titular & Solo reservas originadas por la propia agencia (RNF-17) \\
+Servicio de inventario & \multicolumn{2}{c}{Compartido. Único invariante, único punto de serialización.} \\
+\bottomrule
+\caption{Diferencias entre canales y núcleo compartido.}
+\end{longtable}
+
+El versionado independiente responde a una necesidad operativa concreta: una agencia integrada no puede migrar su cliente el mismo día en que la aerolínea despliega un cambio de contrato.
+
+El único punto en que ambos canales divergen dentro del camino crítico es el débito de crédito dentro de la transacción de confirmación. Esa divergencia es la razón de existir de RF-37: al incorporar un segundo recurso bloqueable, aparece un riesgo de interbloqueo que ninguno de los dos canales presenta por separado.
+
+\subsection{Relación con el \emph{pipeline} analítico}
+El principio rector es que el camino analítico no toca en ningún punto el camino de escritura transaccional (SUP-46, RNF-30). El servicio \texttt{analytics} lee de una réplica y escribe en una base independiente.
+
+La propiedad que hace eficiente esta conexión ya estaba decidida en el modelo de datos: \texttt{reservation\_event} es de solo anexado (SUP-37). En consecuencia, \textbf{el sistema dispone de captura de cambios sin necesidad de infraestructura de CDC}. La extracción incremental se reduce a recuperar los eventos posteriores a una marca de agua persistida entre ejecuciones, sin agentes de replicación lógica, sin disparadores y sin una columna de modificación indexada sobre las tablas transaccionales.
+
+\subsubsection{Límite de la marca de agua y su solución}
+La marca de agua sobre el registro de eventos es suficiente para alimentar \texttt{fact\_reservation\_event}, pero \textbf{no lo es para \texttt{fact\_coupon}}. El cupón es una entidad mutable: su estado pasa de \texttt{EMITIDO} a \texttt{CHECKED\_IN}, \texttt{VOLADO}, \texttt{NO\_SHOW} o \texttt{CANCELADO}. Aunque el diseño registra también los cambios de cupón en el log (SUP-36, RF-65), una cancelación parcial puede modificar un cupón sin alterar el estado de la reserva, y el consolidado posterior al vuelo (RF-64) actualiza cupones de forma masiva.
+
+Se evaluaron tres alternativas: añadir una columna \texttt{updated\_at} indexada a \texttt{coupon} --- que contradice la tesis de operar sin CDC y encarece cada escritura en la ruta crítica ---; desplegar replicación lógica --- que introduce una instancia activa de forma permanente ---; o \textbf{recargar la partición de cupones correspondiente a instancias con salida en las últimas 48 horas}, que es la opción adoptada (SUP-51, RF-72).
+
+La recarga por partición es viable por dos razones cuantificables. El volumen afectado es acotado: 120 salidas diarias por dos días son unas 240 instancias, del orden de 35.000 cupones, frente a los 5{,}5~millones anuales de la tabla completa. Y el particionado por fecha de servicio de \texttt{fact\_coupon} (RNF-23) hace que la operación toque únicamente dos particiones. Sin ese particionado la alternativa no sería sostenible, lo que ilustra por qué ambas decisiones se toman juntas.
+
+\nota{\textbf{Consecuencia de costo.} La ausencia de CDC no es una simplificación del prototipo sino una decisión de arquitectura con efecto económico directo. Un servicio de replicación gestionado exige una instancia activa de forma permanente, mientras que la lectura por marca de agua más la recarga de dos particiones se ejecuta durante los minutos que dura cada corrida horaria. Esta relación se retoma en la justificación de servicios de la Sección~\ref{sec:aws} frente al pilar de optimización de costos.}
+
+Ambos regímenes de consistencia conviven declaradamente: el transaccional es fuertemente consistente en escritura; el analítico admite una ventana de hasta 60 minutos (SUP-49). El proceso ETL absorbe tanto ese desfase como la traducción entre la tercera forma normal del origen y el esquema en estrella del destino. Es la misma tesis sostenida en la Sección~\ref{sec:er} sobre normalización, trasladada al plano arquitectónico: ningún modelo único sirve bien a los dos propósitos, y el costo de la traducción lo asume el componente cuya única función es traducir.
+
+\subsection{Alcance de despliegue en el entorno educativo}
+\label{sec:despliegue}
+El diseño anterior describe la topología objetivo. El prototipo de las Secciones~\ref{sec:impl} y~\ref{sec:aws} se despliega sobre un entorno educativo con presupuesto acotado y sesiones de duración limitada, lo que obliga a las desviaciones siguientes. La Sección~\ref{sec:impl} detalla las que aparecieron durante la implementación.
+
+\begin{longtable}{@{}L{3.4cm} L{4.8cm} L{6.6cm}@{}}
+\toprule \textbf{Componente} & \textbf{Diseño objetivo} & \textbf{Realización en el prototipo} \\ \midrule \endfirsthead
+\toprule \textbf{Componente} & \textbf{Diseño objetivo} & \textbf{Realización en el prototipo} \\ \midrule \endhead
+Réplica de lectura & \texttt{search} y \texttt{analytics} leen de una réplica del primario. & No se despliega réplica: ambos leen del primario. Es admisible porque en el prototipo no existe carga transaccional concurrente con el ETL. Afecta a RNF-30, declarado como Diseñado. \\
+Caché de búsqueda & Caché con TTL de 5 minutos frente al servicio de búsqueda. & No se despliega. En consecuencia, la degradación a caché de RNF-13 y la mitigación de RNF-20 quedan como Diseñado, no como Implementado. \\
+Separación de despliegues & Cuatro servicios desplegados de forma independiente. & Un solo proceso FastAPI con 2 \emph{workers} en una EC2 \texttt{t3.small}. No hay \texttt{gateway}: la API se expone en el puerto 8000, restringido por security group a la IP del equipo. \\
+Motor de base de datos & Primario gestionado con réplica en otra zona. & Amazon RDS for PostgreSQL 16 \texttt{db.t3.micro}, una zona, cifrada. Las bases transaccional y analítica están en la misma instancia. \\
+\bottomrule
+\caption{Desviaciones de despliegue declaradas de antemano.}
+\end{longtable}
+
+\subsection{Diagrama de arquitectura}
+El diagrama representa la topología objetivo. Los componentes enlazados con línea discontinua son los que la Sección~\ref{sec:despliegue} declara como no desplegados en el prototipo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{diagrama-arquitectura.png}
+\caption{Arquitectura de referencia: cuatro servicios desplegables, núcleo transaccional indivisible y separación física entre el almacén transaccional y el analítico.}
+\label{fig:arquitectura}
+\end{figure}
+
+% =====================================================================
+\section{Arquitectura de frontend}
+\label{sec:frontend}
+
+\subsection{Estrategia de renderizado}
+Se adopta un enfoque \textbf{híbrido}, determinado por el requisito no funcional que pesa sobre cada etapa del embudo y no por una preferencia tecnológica uniforme.
+
+\begin{longtable}{@{}L{4.0cm} L{3.4cm} L{7.8cm}@{}}
+\toprule \textbf{Etapa} & \textbf{Estrategia} & \textbf{NFR que la determina} \\ \midrule \endfirsthead
+\toprule \textbf{Etapa} & \textbf{Estrategia} & \textbf{NFR que la determina} \\ \midrule \endhead
+Página de inicio y resultados de búsqueda & Renderizado en servidor & RNF-01 y RNF-02 fijan presupuestos de 300 y 800~ms. El renderizado en servidor entrega contenido útil en la primera respuesta, sin exigir la descarga y ejecución previa del paquete de la aplicación. Es además la etapa indexable. \\
+Embudo de reserva (selección, pasajeros, asiento, pago) & Aplicación de página única & Es un flujo con estado, sujeto a una ventana de 15 minutos y con transiciones frecuentes. Recargar la página en cada paso desperdiciaría el presupuesto de RNF-03 y complicaría el temporizador de expiración. \\
+Consulta posventa y \emph{check-in} & Aplicación de página única & Interacción breve y con estado; no requiere indexación. \\
+Consola administrativa y de agencias & Aplicación de página única & Aplicación densa en datos, tras autenticación, con requisito de disponibilidad inferior (RNF-11 le asigna 99\,\%). \\
+\bottomrule
+\caption{Estrategia de renderizado por etapa y requisito que la sustenta.}
+\end{longtable}
+
+Adoptar una aplicación de página única para la totalidad del sitio penalizaría la etapa de mayor volumen; adoptar renderizado en servidor para todo complicaría innecesariamente la etapa con estado. La decisión se toma por etapa porque el requisito dominante cambia por etapa.
+
+\subsection{Gestión del temporizador de bloqueo}
+Es el punto donde el \emph{frontend} y el mecanismo de concurrencia se tocan, y por tanto la contribución más relevante de esta sección al documento. El servidor devuelve la marca \texttt{expires\_at} al crear el bloqueo (RF-13) y la interfaz la respeta con tres reglas:
+
+\begin{itemize}
+  \item \textbf{La cuenta atrás se calcula contra la marca del servidor, no contra un contador local.} El reloj del dispositivo puede estar desviado, y una cuenta atrás local que se adelanta muestra al usuario un bloqueo vencido que aún está vigente, o al revés.
+  \item \textbf{La expiración se descubre por rechazo, no por temporizador.} Cuando el contador llega a cero, la interfaz no asume nada: intenta la operación y muestra el resultado que devuelva el servidor. El temporizador es información al usuario, no lógica de negocio; la autoridad sobre la vigencia del bloqueo reside en \texttt{core}.
+  \item \textbf{El cierre de la pestaña no requiere tratamiento.} El bloqueo expira por sí solo (RF-17, RF-18), de modo que no se emiten peticiones de liberación al abandonar la página. Es una consecuencia del diseño perezoso del bloqueo y evita una clase entera de peticiones no confiables.
+\end{itemize}
+
+\subsection{Notificación de indisponibilidad del asiento}
+El enunciado plantea cómo notificar en tiempo real que el asiento en proceso de selección ha dejado de estar disponible. En esta arquitectura la pregunta tiene un alcance mucho más reducido de lo que aparenta, y ello es consecuencia directa de una decisión de modelado ya adoptada.
+
+Conforme a SUP-22 y SUP-23, únicamente las clases \textbf{L y PR} seleccionan asiento en el momento de la compra. Las clases XS, S y M no visualizan el mapa de asientos: su asignación ocurre en el \emph{check-in}.
+
+\begin{longtable}{@{}L{3.0cm} L{4.4cm} L{7.8cm}@{}}
+\toprule \textbf{Clases} & \textbf{Exposición} & \textbf{Mecanismo} \\ \midrule \endfirsthead
+\toprule \textbf{Clases} & \textbf{Exposición} & \textbf{Mecanismo} \\ \midrule \endhead
+XS, S, M & Nula & No hay asiento que perder. El único recurso agotable es el cupo, y queda protegido por el bloqueo de 15 minutos desde el instante en que el pasajero entra al embudo. No se requiere ningún canal en tiempo real. \\
+L y PR & Ventana de segundos entre el pintado del mapa y la selección & Sondeo del estado del mapa cada 5 a 10 segundos mientras la pantalla permanece abierta, y rechazo optimista con código de conflicto si el asiento fue tomado entre el pintado y la confirmación, tras el cual la interfaz refresca el mapa y marca el asiento como ocupado. \\
+\bottomrule
+\caption{Exposición a la pérdida de asiento por clase tarifaria.}
+\end{longtable}
+
+\nota{\textbf{Por qué no se emplean conexiones persistentes.} Un canal de difusión en tiempo real introduce estado de conexión por usuario, lógica de reconexión, afinidad de sesión en el escalado y un canal de publicación por instancia de vuelo. Todo ello para cubrir una ventana de segundos sobre las clases que sí eligen asiento en la compra, con un mapa acotado y pocos usuarios concurrentes por vuelo. La complejidad no guarda proporción con el problema, y el problema es pequeño precisamente porque la asignación de asiento se difirió al \emph{check-in} para las clases básicas. Es un caso en que una decisión de modelado elimina una necesidad de infraestructura.}
+
+\subsection{Interfaz diferenciada para agencias}
+Sí, y se despliega como aplicación independiente, no como una sección con permisos distintos dentro del sitio público.
+
+\begin{itemize}
+  \item \textbf{Tarea distinta.} El agente reserva para terceros en volumen, con entrada rápida de datos y consulta de saldo de crédito. El pasajero reserva para sí mismo, una vez. Optimizar una sola interfaz para ambos perfiles la empeora para los dos.
+  \item \textbf{Información exclusiva del canal.} Saldo de línea de crédito, comisión aplicable y corte de liquidación no deben existir siquiera en el paquete descargado por el pasajero.
+  \item \textbf{Superficie de ataque.} RNF-17 exige aislamiento estricto entre agencias. Separar la aplicación reduce el riesgo de que un defecto de autorización en la interfaz pública exponga datos del canal B2B.
+  \item \textbf{Ciclo de despliegue.} La consola puede desplegarse con menor exigencia de disponibilidad (RNF-11 le asigna 99\,\%), sin acoplarse al calendario del sitio público.
+\end{itemize}
+
+Ambas aplicaciones consumen el mismo \texttt{gateway} y, en última instancia, el mismo servicio de inventario. La separación es de interfaz y de política de acceso, nunca de lógica de negocio.
+
+\subsection{Múltiples monedas e idiomas}
+
+\subsubsection{Moneda}
+Conforme a SUP-16, la totalidad de las ventas se cotiza, cobra y persiste en pesos colombianos. La implicación principal para el \emph{frontend} es de naturaleza negativa y conviene enunciarla como restricción: \textbf{la interfaz nunca calcula ni convierte importes}. Recibe del servidor los tres componentes ya resueltos --- tarifa base, impuestos y tasas --- y se limita a presentarlos.
+
+Dos consecuencias de formato. El peso colombiano se maneja sin fracción decimal, de modo que el formateo debe evitar la notación de dos decimales habitual en bibliotecas de internacionalización configuradas por defecto. Y la agrupación de miles debe seguir la convención local, dado el tamaño habitual de los importes.
+
+En el canal de agencias, cuando la conversión ocurre en el canal del intermediario (SUP-17), la interfaz debe mostrar de forma simultánea el importe en COP y la tasa aplicada, ya que ambos quedan registrados y son los valores auditables.
+
+\subsubsection{Idioma}
+El alcance se limita a español e inglés, este último justificado por las rutas internacionales. Las implicaciones estructurales relevantes son tres, y ninguna es la traducción de literales:
+
+\begin{itemize}
+  \item \textbf{Los textos regulatorios no se traducen de forma libre.} La información sobre derechos de retracto y desistimiento tiene efecto legal en Colombia; su versión en español es la vinculante y la traducción es referencial. Debe declararse en la propia interfaz.
+  \item \textbf{Zona horaria antes que idioma.} Los horarios se presentan siempre en hora local del aeropuerto correspondiente, con indicación explícita del huso, nunca en la zona del dispositivo. Un itinerario que cruza husos y se muestra en hora del dispositivo induce a error en la lectura de la escala (SUP-09).
+  \item \textbf{Formato de fecha.} La ambigüedad entre las convenciones día--mes y mes--día es una fuente real de compras erróneas. Se emplea nombre de mes abreviado en lugar de forma exclusivamente numérica.
+\end{itemize}
+
+La estructura de la aplicación se ve afectada de forma marginal --- un diccionario de recursos y un selector de configuración regional --- porque la decisión de moneda única eliminó de antemano la parte costosa del problema, que es la conversión y la representación de importes en varias divisas.
+
+% =====================================================================
+\section{Primera implementación del backend}
+\label{sec:impl}
+
+\subsection{Alcance de la implementación}
+La implementación no construye el sistema completo de las secciones anteriores. Construye el \textbf{núcleo transaccional}: búsqueda, reserva directa y con escalas, pago simulado, consulta y cancelación, sobre un modelo de datos reducido que conserva el invariante de inventario. El criterio para elegir qué implementar fue el mismo que gobierna todo el documento: todo lo que toca el invariante (RNF-06 a RNF-08) se implementa y se prueba; lo que no lo toca (agencias con crédito, bloqueos temporales, cupones, asientos, registro de eventos) queda en el diseño.
+
+\begin{itemize}
+  \item \textbf{Repositorio:} \url{https://github.com/Ooojulian/airline-reservation-system}.
+  \item \textbf{Base de datos:} Amazon RDS for PostgreSQL 16.15, instancia \texttt{db.t3.micro}, una zona, almacenamiento cifrado.
+  \item \textbf{API:} FastAPI con Uvicorn (2 \emph{workers}) en un contenedor Docker sobre una EC2 \texttt{t3.small}.
+  \item \textbf{Ejecución:} todo corre en AWS Academy Learner Lab. Ninguna prueba ni base de datos se ejecutó en un equipo local.
+\end{itemize}
+
+\subsection{Estructura del repositorio}
+\begin{longtable}{@{}L{5.0cm} L{10.6cm}@{}}
+\toprule \textbf{Ruta} & \textbf{Contenido} \\ \midrule \endfirsthead
+\toprule \textbf{Ruta} & \textbf{Contenido} \\ \midrule \endhead
+\texttt{backend/app/main.py} & Endpoints y lógica de reserva con control de concurrencia. \\
+\texttt{backend/app/db.py} & Pool de conexiones (psycopg~3, hasta 20 conexiones por \emph{worker}, SSL obligatorio). \\
+\texttt{backend/schema.sql} & DDL del modelo transaccional implementado (10 tablas). \\
+\texttt{backend/schema\_olap.sql} & DDL de la base analítica (2 tablas de hechos). \\
+\texttt{backend/seed.sql} & Datos de ejemplo generados en SQL, reproducibles. \\
+\texttt{backend/Dockerfile}, \texttt{run\_api.sh} & Imagen de la API y arranque leyendo credenciales de SSM Parameter Store. \\
+\texttt{tests/test\_api.py} & 11 pruebas (20 casos al contar las rondas de concurrencia). \\
+\texttt{tests/p95\_search.py} & Medición de latencia de búsqueda con clientes concurrentes. \\
+\texttt{infra/1\_red\_y\_rds.sh} & Security groups, RDS, parámetros SSM, bucket S3 y endpoint de S3. \\
+\texttt{infra/2\_esquemas\_y\_datos.sh} & Crea las dos bases y carga esquema y datos (se ejecuta dentro de la EC2). \\
+\texttt{infra/3\_ec2\_api.sh} & EC2, Docker y despliegue de la API. \\
+\texttt{infra/4\_glue.sh} & Conexiones JDBC, crawlers y job de Glue. \\
+\texttt{infra/glue/etl\_oltp\_to\_olap.py} & Job ETL (PySpark). \\
+\texttt{infra/apagar.sh}, \texttt{encender.sh} & Detienen y reinician RDS y EC2 entre sesiones. \\
+\texttt{infra/exported/} & Definiciones de los recursos de AWS exportadas en JSON, sin contraseñas. \\
+\texttt{evidence/} & Salidas de las pruebas, de la latencia y de Glue. \\
+\bottomrule
+\caption{Estructura del repositorio.}
+\end{longtable}
+
+\subsection{Modelo implementado frente al modelo diseñado}
+El modelo de la Sección~\ref{sec:er} tiene 24 entidades. El implementado tiene 10 tablas. La reducción conserva las tres decisiones que el enunciado pide resolver: itinerario con escalas, vuelo recurrente y control de inventario.
+
+\begin{longtable}{@{}L{4.4cm} L{4.0cm} L{7.2cm}@{}}
+\toprule \textbf{Diseño (Sección~\ref{sec:er})} & \textbf{Implementado} & \textbf{Qué se conserva y qué se pierde} \\ \midrule \endfirsthead
+\toprule \textbf{Diseño (Sección~\ref{sec:er})} & \textbf{Implementado} & \textbf{Qué se conserva y qué se pierde} \\ \midrule \endhead
+\texttt{airport}, \texttt{route} & \texttt{airports}, \texttt{routes} & Igual. Sin zona horaria IANA: todas las rutas del prototipo son nacionales. \\
+\texttt{aircraft\_type}, \texttt{aircraft}, \texttt{seat} & \texttt{aircraft} & Una tabla con la capacidad total. Sin mapa de asientos. \\
+\texttt{scheduled\_flight}, \texttt{flight\_instance} & \texttt{scheduled\_flights}, \texttt{flights} & Se conserva la separación entre vuelo programado y vuelo con fecha. \\
+\texttt{flight\_inventory}, \texttt{fare\_bucket} & Columna \texttt{flights.seats\_available} & El contador vive en la fila del vuelo, con \texttt{CHECK (seats\_available BETWEEN 0 AND capacity)}. Se pierde el cupo por cabina y por clase: ECONOMY y BUSINESS comparten el cupo del vuelo. \\
+\texttt{inventory\_hold} & No se implementa & El pago se aprueba en el mismo acto de la reserva, así que no hay bloqueos temporales que expirar. \\
+\texttt{fare\_class}, \texttt{fare\_rule} & \texttt{fare\_rules} & Dos clases con multiplicador por anticipación (0, 7 y 21 días). Sin matriz de reembolso. \\
+\texttt{reservation}, \texttt{itinerary\_segment} & \texttt{reservations}, \texttt{reservation\_segments} & Una reserva con hasta cuatro tramos, cada uno con su precio congelado. \\
+\texttt{passenger}, \texttt{ticket}, \texttt{coupon} & \texttt{passengers} y el tramo & Un pasajero por reserva. El tramo hace el papel del cupón: ocupa una silla y es el grano del ETL. \\
+\texttt{seat\_assignment} & No se implementa & Asignación en \emph{check-in}, fuera del prototipo. \\
+\texttt{payment}, \texttt{refund} & \texttt{payments} & Monto, proveedor, referencia y estado (\texttt{APPROVED} o \texttt{REFUNDED}). Nunca datos de tarjeta. \\
+\texttt{agency}, \texttt{agency\_commission}, \texttt{agency\_credit}, \texttt{credit\_movement} & No se implementan & Las agencias usan la misma API sin autenticación propia ni crédito. \\
+\texttt{reservation\_event} & Columnas \texttt{created\_at} y \texttt{updated\_at} & Se pierde el histórico completo de transiciones. \\
+\bottomrule
+\caption{Correspondencia entre el modelo diseñado y el implementado.}
+\end{longtable}
+
+Dos cambios de tipo surgieron al implementar. \texttt{flights.flight\_id} es texto (por ejemplo \texttt{AV101-20260601}) y lo asigna quien crea el vuelo, lo que da un identificador legible y estable para el ETL y para las pruebas. Y \texttt{passengers.document\_id} y \texttt{email} son opcionales, porque la reserva solo exige el nombre del pasajero.
+
+\subsection{Endpoints}
+\begin{longtable}{@{}L{5.2cm} L{6.6cm} L{3.8cm}@{}}
+\toprule \textbf{Método y ruta} & \textbf{Qué hace} & \textbf{Respuestas} \\ \midrule \endfirsthead
+\toprule \textbf{Método y ruta} & \textbf{Qué hace} & \textbf{Respuestas} \\ \midrule \endhead
+\texttt{GET /flights/search} & Vuelos directos con sillas por origen, destino y fecha. & 200 · 422 \\
+\texttt{GET /flights/\{flight\_id\}} & Inventario de un vuelo concreto. & 200 · 404 \\
+\texttt{POST /reservations} & Reserva directa o con escalas (\texttt{connection\_flight\_ids}), con pago simulado en el mismo acto. & 201 · 404 · 409 · 422 \\
+\texttt{GET /reservations/\{id\}} & Consulta de una reserva con sus tramos y su pago. & 200 · 404 \\
+\texttt{POST /reservations/\{id\}/cancel} & Cancela, devuelve una silla por tramo y marca el pago como reembolsado. & 200 · 404 · 409 \\
+\texttt{POST /admin/flights} & Registra un vuelo con fecha; crea la ruta si no existe. & 201 · 409 · 422 \\
+\texttt{GET /health} & Estado de la API y de la conexión a la base. & 200 \\
+\bottomrule
+\caption{Endpoints implementados.}
+\end{longtable}
+
+La documentación interactiva (OpenAPI) queda disponible en \texttt{/docs} de la misma API.
+
+\subsection{Mecanismo de concurrencia tal como se implementó}
+La Sección~\ref{sec:backend} adopta bloqueo pesimista con \texttt{SELECT \ldots FOR UPDATE}. La implementación usa la forma equivalente en una sola sentencia: un \texttt{UPDATE} condicional.
+
+\begin{lstlisting}[language=SQL,caption={Descuento de una silla por tramo, dentro de la transacción de la reserva.}]
+UPDATE flights
+   SET seats_available = seats_available - 1
+ WHERE flight_id = %s
+   AND seats_available > 0
+   AND flight_date >= CURRENT_DATE
+RETURNING price_cents, flight_date;
+\end{lstlisting}
+
+PostgreSQL toma el mismo bloqueo de fila que tomaría \texttt{FOR UPDATE}. La diferencia es que la lectura, la validación y la escritura ocurren en una sola sentencia, sin un viaje de ida y vuelta entre la aplicación y la base mientras se sostiene el bloqueo. Cuando dos peticiones llegan a la vez, la segunda espera a que termine la primera y vuelve a evaluar \texttt{seats\_available > 0} con el valor ya confirmado. Si la condición falla, el \texttt{UPDATE} no afecta filas y la API responde 409 de inmediato (RNF-07).
+
+El flujo de \texttt{POST /reservations} es:
+\begin{enumerate}
+  \item Validar que los vuelos existen (404), que los tramos encadenan y que las fechas no retroceden ni ya pasaron (422).
+  \item Abrir una transacción y ejecutar el \texttt{UPDATE} anterior para cada vuelo, \textbf{en orden ascendente de \texttt{flight\_id}} (RF-37, RN-04).
+  \item Si un tramo no tiene silla: \texttt{ROLLBACK}, que devuelve las sillas ya tomadas en los tramos anteriores, y respuesta 409 (RNF-08).
+  \item Calcular el precio con la regla de \texttt{fare\_rules} de mayor \texttt{min\_days\_before} que no supere los días que faltan para el primer tramo.
+  \item Insertar pasajero, reserva, tramos y pago \texttt{APPROVED}, y confirmar.
+\end{enumerate}
+
+El \texttt{CHECK} de la tabla es una segunda barrera en el motor: aunque la aplicación tuviera un error, la base no aceptaría \texttt{seats\_available} negativo. La cancelación usa el mismo orden ascendente para devolver las sillas y un \texttt{UPDATE \ldots WHERE status = 'CONFIRMED'} para que dos cancelaciones simultáneas no devuelvan la silla dos veces.
+
+\subsection{Prueba de concurrencia y evidencia}
+\textbf{Método.} La prueba crea un vuelo con \texttt{POST /admin/flights} y lanza 50 peticiones \texttt{POST /reservations} desde 50 hilos que esperan en una barrera (\texttt{threading.Barrier}) y salen al mismo tiempo. Se repite 5 rondas con 1 silla y 5 rondas con 5 sillas. Después de cada ronda se consulta el vuelo y se verifica que quedó en 0 sillas. Se ejecutó en la EC2 contra la API desplegada y la base RDS el 19 de octubre de 2026.
+
+\begin{longtable}{@{}L{3.6cm} C{1.9cm} C{1.9cm} C{1.9cm} C{1.9cm} C{1.9cm}@{}}
+\toprule \textbf{Escenario} & \textbf{Ronda 1} & \textbf{Ronda 2} & \textbf{Ronda 3} & \textbf{Ronda 4} & \textbf{Ronda 5} \\ \midrule \endfirsthead
+\toprule \textbf{Escenario} & \textbf{Ronda 1} & \textbf{Ronda 2} & \textbf{Ronda 3} & \textbf{Ronda 4} & \textbf{Ronda 5} \\ \midrule \endhead
+1 silla, 50 peticiones & 1 / 49 & 1 / 49 & 1 / 49 & 1 / 49 & 1 / 49 \\
+5 sillas, 50 peticiones & 5 / 45 & 5 / 45 & 5 / 45 & 5 / 45 & 5 / 45 \\
+\bottomrule
+\caption{Respuestas 201 / 409 por ronda. En ninguna ronda hubo respuestas 5xx y todos los vuelos terminaron con \texttt{seats\_available = 0}.}
+\end{longtable}
+
+Resultados adicionales:
+\begin{itemize}
+  \item \textbf{Suite completa:} 20 de 20 casos aprobados en 2,61~s. Incluye reserva directa, reserva con escala, tramos que no encadenan (422), vuelo inexistente (404), consulta, cancelación, doble cancelación (409), vuelo duplicado (409) y la prueba de itinerario todo o nada: cuando el segundo tramo no tiene sillas, la reserva se rechaza y el primer tramo conserva sus sillas.
+  \item \textbf{Latencia de búsqueda:} 100 peticiones con 20 clientes concurrentes: p50 = 41~ms, p95 = 83~ms, máximo 105~ms.
+  \item \textbf{Consistencia de los datos de ejemplo:} 1.448 vuelos, 150.197 reservas, 170.135 tramos y 18.063 cancelaciones. La consulta que compara \texttt{capacity - seats\_available} con los tramos confirmados de cada vuelo devuelve 0 vuelos inconsistentes.
+\end{itemize}
+
+Evidencia en el repositorio: \texttt{evidence/evidencia\_pruebas.txt} (salida de \texttt{pytest -v -s}) y \texttt{evidence/p95\_search.txt}.
+
+\textbf{Hallazgo durante la prueba.} Con el pool inicial de 10 conexiones por \emph{worker}, las 50 peticiones simultáneas quedaban esperando conexión y la API podía responder 503 al agotarse la espera. Un 503 es un 5xx y viola RNF-07. Se amplió el pool a 20 conexiones por \emph{worker} (40 en total, la mitad de las cerca de 80 que admite una \texttt{db.t3.micro}) y desde entonces no se registró ningún 5xx.
+
+\subsection{Datos de ejemplo}
+\begin{itemize}
+  \item 12 aeropuertos y 8 rutas nacionales (BOG--MDE, BOG--CLO, BOG--CTG, MDE--CTG y sus inversas).
+  \item Un vuelo diario de 150 sillas por ruta, del 1 de junio al 28 de noviembre de 2026: 1.448 vuelos.
+  \item 150.197 reservas, cerca de 12\,\% canceladas, 85\,\% ECONOMY y 15\,\% BUSINESS. Unas 20.000 tienen escala.
+  \item Se generan con \texttt{generate\_series} y una semilla fija, en unos 17~s, y dejan el inventario consistente con los tramos confirmados.
+\end{itemize}
+
+Esta volumetría es mucho menor que la de la Sección~\ref{sec:volumetria}. Basta para probar el invariante y alimentar el ETL, pero no para medir el comportamiento con la carga pico proyectada.
+
+\subsection{Guía de ejecución}
+\begin{enumerate}
+  \item Configurar AWS CLI con las credenciales de la sesión del Learner Lab (o abrir CloudShell).
+  \item \texttt{bash infra/1\_red\_y\_rds.sh}: crea security groups, RDS, parámetros SSM, bucket y endpoint de S3.
+  \item \texttt{bash infra/3\_ec2\_api.sh}: crea la EC2, sube el código y ejecuta en ella \texttt{2\_esquemas\_y\_datos.sh} y \texttt{run\_api.sh} mediante SSM Run Command.
+  \item \texttt{bash infra/4\_glue.sh}: crea las conexiones, los crawlers y el job, y los ejecuta.
+  \item Pruebas: en la EC2, \texttt{BASE\_URL=http://localhost:8000 pytest -v -s tests/}.
+  \item Al terminar la sesión: \texttt{bash infra/apagar.sh}. Al volver: \texttt{bash infra/encender.sh}, que imprime la nueva IP pública.
+\end{enumerate}
+
+\subsection{Desviaciones respecto al diseño}
+\begin{longtable}{@{}L{4.6cm} L{6.6cm} L{4.4cm}@{}}
+\toprule \textbf{Desviación} & \textbf{Motivo} & \textbf{Sección afectada} \\ \midrule \endfirsthead
+\toprule \textbf{Desviación} & \textbf{Motivo} & \textbf{Sección afectada} \\ \midrule \endhead
+De 24 entidades a 10 tablas. & Alcance del parcial y presupuesto del laboratorio. Se conserva todo lo que toca el invariante. & \ref{sec:er} \\
+Sin bloqueo temporal de 15 minutos; pago aprobado en el mismo acto. & Elimina expiraciones, barridos y la conciliación de autorizaciones huérfanas. La reserva y el pago confirmados son una sola transacción. & \ref{sec:backend}, pago en dos fases \\
+\texttt{UPDATE} condicional en lugar de \texttt{SELECT \ldots FOR UPDATE}. & Mismo bloqueo de fila en una sola sentencia y sin viaje de ida y vuelta con el bloqueo tomado. & \ref{sec:backend}, concurrencia \\
+Sin \texttt{lock\_timeout} configurado. & La transacción de reserva dura milisegundos y la prueba resolvió cada ronda de 50 peticiones sin esperas largas. Queda como ajuste para producción. & \ref{sec:backend}, parámetros \\
+Un solo proceso (FastAPI) en lugar de cuatro servicios. & En el prototipo no hay \texttt{gateway} ni servicio de búsqueda separado; el código vive en un módulo. La regla de la frontera transaccional se cumple igual: todo el núcleo está en un proceso y una base. & \ref{sec:despliegue} \\
+Búsqueda solo de vuelos directos. & Las reservas con escala se crean indicando los vuelos de conexión; la construcción automática de itinerarios con MCT (RF-02, RF-03) no se implementó. & \ref{sec:rf} \\
+Sin agencias, crédito ni autenticación B2B. & No afecta el invariante de sillas. RNF-09 y RNF-17 quedan como Excluido en el prototipo. & \ref{sec:backend}, agencias \\
+Sin registro de eventos; solo \texttt{created\_at} y \texttt{updated\_at}. & Alcance. RNF-24 a RNF-26 quedan como Diseñado. & \ref{sec:er}, auditoría \\
+Pool de 20 conexiones por \emph{worker}. & Hallazgo de la prueba de concurrencia: con 10 aparecían 503. & Esta sección \\
+Base \texttt{db.t3.micro} en una zona, sin réplica. & Cumple RNF-06 a RNF-08 con p95 de 83~ms. Una instancia mayor o un clúster no tendrían beneficio medible en el laboratorio. & \ref{sec:aws} \\
+\bottomrule
+\caption{Desviaciones de la implementación respecto al diseño.}
+\end{longtable}
+
+% =====================================================================
+\section{Implementación en AWS: ETL, catálogo de datos y costos}
+\label{sec:aws}
+
+\subsection{Arquitectura desplegada}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw=usaAzul, thick, rounded corners=2pt, align=center, minimum height=1.0cm, inner sep=5pt, font=\small, fill=white},
+  zone/.style={draw=usaGris, dashed, rounded corners=4pt, inner sep=8pt},
+  arr/.style={-{Stealth[length=2.5mm]}, thick, usaGris},
+  lbl/.style={font=\scriptsize, text=usaGris, align=center}]
+  \node[box] (user) at (0,0) {Pasajero / agencia\\(HTTP)};
+  \node[box] (ec2) at (4.2,0) {EC2 \texttt{t3.small}\\Docker: FastAPI\\(2 \emph{workers})};
+  \node[box] (oltp) at (9.0,0.9) {\texttt{airline\_oltp}\\(10 tablas, 3FN)};
+  \node[box] (olap) at (9.0,-0.9) {\texttt{airline\_olap}\\(2 tablas de hechos)};
+  \node[box] (job) at (4.2,-3.0) {AWS Glue job\\PySpark, 2 $\times$ G.1X};
+  \node[box] (crawl) at (9.0,-3.0) {2 crawlers\\(bajo demanda)};
+  \node[box] (cat) at (13.0,-3.0) {Glue Data Catalog\\\texttt{airline\_oltp}\\\texttt{airline\_olap}};
+  \node[box] (s3) at (0,-3.0) {S3\\script y evidencias};
+  \node[box] (ssm) at (0,-1.5) {SSM\\Parameter Store};
+  \node[zone, fit=(oltp)(olap), label={[lbl]above:RDS PostgreSQL 16 \texttt{db.t3.micro}}] (rds) {};
+  \draw[arr] (user) -- node[lbl,above]{:8000} (ec2);
+  \draw[arr] (ec2) -- node[lbl,above,sloped]{SQL, SSL} (oltp.west);
+  \draw[arr] (ssm) -- node[lbl,above,sloped]{credenciales} (ec2);
+  \draw[arr] (oltp.south west) -- node[lbl,left]{JDBC\\lectura} (job);
+  \draw[arr] (job) -- node[lbl,below,sloped]{JDBC escritura} (olap.west);
+  \draw[arr] (s3) -- node[lbl,above]{endpoint Gateway} (job);
+  \draw[arr] (rds.south) -- (crawl);
+  \draw[arr] (crawl) -- (cat);
+\end{tikzpicture}
+\caption{Arquitectura desplegada en AWS Academy Learner Lab (us-east-1). Todos los componentes están en la VPC por defecto; no hay NAT Gateway ni balanceador.}
+\label{fig:aws}
+\end{figure}
+
+\subsection{Qué se copia a la base analítica}
+No se copia ninguna tabla tal cual. El job lee \texttt{flights}, \texttt{reservations}, \texttt{reservation\_segments} y \texttt{fare\_rules}, y produce dos tablas agregadas:
+
+\begin{longtable}{@{}L{3.6cm} L{2.4cm} L{9.6cm}@{}}
+\toprule \textbf{Tabla} & \textbf{Grano} & \textbf{Columnas y pregunta que responde} \\ \midrule \endfirsthead
+\toprule \textbf{Tabla} & \textbf{Grano} & \textbf{Columnas y pregunta que responde} \\ \midrule \endhead
+\texttt{fact\_route\_month} & Ruta $\times$ mes & \texttt{seats\_capacity}, \texttt{seats\_sold}, \texttt{occupancy}, \texttt{revenue\_cents}, \texttt{bookings}, \texttt{cancellations}. Responde ocupación por ruta e ingresos por ruta. \\
+\texttt{fact\_fare\_month} & Clase $\times$ mes & \texttt{revenue\_cents}, \texttt{bookings}, \texttt{cancellations}, \texttt{cancel\_rate}. Responde ingresos por tarifa y patrón de cancelación. \\
+\bottomrule
+\caption{Tablas de la base analítica implementada.}
+\end{longtable}
+
+Reglas de la transformación:
+\begin{itemize}
+  \item Se cuenta \textbf{por tramo}, no por reserva: un itinerario con escala ocupa una silla en cada vuelo. Es la misma razón por la que el diseño fija el grano en el cupón (Sección~\ref{sec:estrella}).
+  \item \texttt{seats\_sold}, \texttt{bookings} e ingresos cuentan solo tramos \texttt{CONFIRMED}. \texttt{cancel\_rate} = \texttt{cancellations} / (\texttt{bookings} + \texttt{cancellations}).
+  \item El mes es el de la fecha del vuelo, no el de la compra, porque la ocupación se mide sobre el vuelo.
+  \item No se copia ningún dato personal ni de pago: ni nombres, ni documentos, ni correos, ni referencias de pago (RNF-16).
+\end{itemize}
+
+\textbf{Relación con el modelo en estrella.} La Sección~\ref{sec:estrella} diseña tres tablas de hechos y siete dimensiones. Lo implementado es una versión agregada de ese diseño: las dos tablas equivalen a consultas ya resueltas sobre \texttt{fact\_coupon} agrupadas por ruta y mes y por clase y mes. Con 170.000 tramos no se justifica mantener el grano de cupón en la analítica; con el volumen proyectado sí, y por eso el diseño se conserva como objetivo.
+
+\textbf{Resultado.} Tras la última ejecución, \texttt{fact\_route\_month} tiene 48 filas (8 rutas $\times$ 6 meses, de junio a noviembre de 2026) y \texttt{fact\_fare\_month} tiene 12 (2 clases $\times$ 6 meses). La ruta con mayor ocupación es BOG--MDE en julio de 2026, con 74,0\,\%.
+
+\subsection{Esquema analítico frente al transaccional}
+Son esquemas distintos a propósito, y es la misma tesis de la Sección~\ref{sec:er}: la base transaccional está en tercera forma normal para evitar anomalías bajo escritura concurrente; la analítica está desnormalizada y preagregada porque solo se lee, y el área comercial necesita respuestas sin unir cinco tablas. Si la analítica copiara el esquema transaccional, cada consulta de ocupación repetiría la agregación sobre todos los tramos.
+
+\subsection{Servicio de ETL}
+\begin{longtable}{@{}L{3.6cm} L{6.0cm} L{6.0cm}@{}}
+\toprule \textbf{Opción en el Learner Lab} & \textbf{Ventaja} & \textbf{Por qué no se eligió} \\ \midrule \endfirsthead
+\toprule \textbf{Opción en el Learner Lab} & \textbf{Ventaja} & \textbf{Por qué no se eligió} \\ \midrule \endhead
+AWS Lambda con SQL & Muy barata para cargas pequeñas. & Límite de 15 minutos, conexión manual a la VPC y no registra metadatos en el catálogo. No absorbe el crecimiento de RNF-22. \\
+\texttt{postgres\_fdw} dentro de RDS & Sin servicio adicional. & Acopla las dos bases, y la carga analítica corre en el mismo motor que las reservas, contra RNF-30. \\
+AWS DMS & Replicación continua. & Exige una instancia de replicación encendida todo el tiempo; el diseño descarta CDC por costo (Sección~\ref{sec:backend}). \\
+\textbf{AWS Glue (job PySpark)} & Servicio administrado, se paga por segundo de ejecución, usa las mismas conexiones que los crawlers y escala con más \emph{workers}. & \textbf{Elegido.} \\
+\bottomrule
+\caption{Opciones de ETL consideradas.}
+\end{longtable}
+
+Configuración del job \texttt{airline-etl-oltp-to-olap}: Glue 4.0, 2 \emph{workers} G.1X, rol \texttt{LabRole}, \emph{timeout} de 15 minutos y sin reintentos. Lee por JDBC con lecturas simples en \texttt{READ COMMITTED}, que en PostgreSQL no bloquean escrituras, y escribe en \texttt{airline\_olap} con \texttt{TRUNCATE} más inserción, de modo que cada ejecución deja las tablas completas y es repetible. Las dos ejecuciones registradas terminaron en estado SUCCEEDED: 110~s (220 DPU-s) y 106~s.
+
+\subsection{Conexión con el Glue Data Catalog}
+\begin{itemize}
+  \item \textbf{Conexiones JDBC:} \texttt{airline-oltp-conn} y \texttt{airline-olap-conn}, una por base, en la subred de la instancia RDS (us-east-1a) y con su security group.
+  \item \textbf{Red:} el security group de la base tiene una regla que se referencia a sí mismo, porque los \emph{workers} de Glue se comunican entre sí por cualquier puerto. Glue necesita leer el script de S3 desde la VPC; en lugar de un NAT Gateway (unos US\$33 al mes) se usa un endpoint Gateway de S3, que es gratuito.
+  \item \textbf{Rol IAM:} \texttt{LabRole}, el único que permite el Learner Lab.
+  \item \textbf{Crawlers:} \texttt{airline-oltp-crawler} (ruta \texttt{airline\_oltp/public/\%}) y \texttt{airline-olap-crawler} (\texttt{airline\_olap/public/\%}), sin programación.
+  \item \textbf{Resultado:} la base \texttt{airline\_oltp} del catálogo tiene 10 tablas y \texttt{airline\_olap} tiene 2, con sus columnas y tipos. Evidencia en \texttt{evidence/glue\_evidencia.txt} e \texttt{infra/exported/}.
+\end{itemize}
+
+\subsection{Frecuencia de ejecución}
+\begin{longtable}{@{}L{3.0cm} L{3.4cm} L{3.0cm} L{6.2cm}@{}}
+\toprule \textbf{Frecuencia} & \textbf{Frescura} & \textbf{Costo Glue al mes} & \textbf{Comentario} \\ \midrule \endfirsthead
+\toprule \textbf{Frecuencia} & \textbf{Frescura} & \textbf{Costo Glue al mes} & \textbf{Comentario} \\ \midrule \endhead
+Una sola vez & Se congela & $\sim$US\$0,03 & No responde la pregunta de negocio con el tiempo. \\
+Bajo demanda & La de la última ejecución & $<$ US\$0,30 & \textbf{Usada en el laboratorio:} una ejecución programada fallaría con RDS detenida. \\
+Diaria & Hasta 24~h & $\sim$US\$0,80 & Suficiente para un tablero gerencial. \\
+Horaria & Hasta 60~min & $\sim$US\$19,60 & \textbf{Objetivo de producción} según SUP-49. \\
+Por evento (CDC) & Segundos & $>$ US\$50 & Requiere una instancia de replicación encendida; descartado en el diseño. \\
+\bottomrule
+\caption{Frecuencia del ETL frente a frescura y costo (2 DPU, unos 110~s por ejecución, US\$0,44 por DPU-hora).}
+\end{longtable}
+
+\subsection{Justificación de servicios}
+\begin{longtable}{@{}L{3.0cm} L{2.6cm} L{2.6cm} L{7.4cm}@{}}
+\toprule \textbf{Servicio} & \textbf{Alternativa} & \textbf{Requisito} & \textbf{Pilar Well-Architected} \\ \midrule \endfirsthead
+\toprule \textbf{Servicio} & \textbf{Alternativa} & \textbf{Requisito} & \textbf{Pilar Well-Architected} \\ \midrule \endhead
+RDS PostgreSQL 16, \texttt{db.t3.micro}, cifrada & Aurora PostgreSQL; DynamoDB & RNF-06, RNF-07, RNF-08 & \textbf{Confiabilidad:} transacciones ACID y bloqueo por fila, que DynamoDB no da entre varios ítems sin coste extra. \textbf{Costos:} la talla mínima cumplió las pruebas; Aurora cuesta cerca de 5 veces más sin beneficio medido. \\
+Segunda base \texttt{airline\_olap} en la misma instancia & Otra instancia RDS & RNF-16, RNF-30 & \textbf{Costos:} una segunda instancia duplicaría el gasto. \textbf{Eficiencia de rendimiento:} el modelo agregado se lee sin uniones. \\
+EC2 \texttt{t3.small} con Docker & Elastic Beanstalk; ECS Fargate & RNF-01, RNF-03 & \textbf{Costos:} la opción más barata para un proceso continuo. \textbf{Excelencia operativa:} un script despliega la API y otro la reinicia. \\
+AWS Glue job & Lambda; DMS; \texttt{postgres\_fdw} & RNF-22, RNF-30 & \textbf{Excelencia operativa:} servicio administrado. \textbf{Costos:} se paga solo mientras corre. \\
+Glue crawlers y Data Catalog & Registro manual de tablas & Requisito 5.7 del enunciado & \textbf{Excelencia operativa:} los metadatos se actualizan solos al cambiar el esquema. \\
+S3 con endpoint Gateway & NAT Gateway & RNF-30 & \textbf{Costos:} el endpoint es gratis frente a unos US\$33 al mes. \textbf{Seguridad:} el tráfico no sale a internet. \\
+SSM Parameter Store (SecureString) & Contraseña en el código; Secrets Manager & RNF-18 & \textbf{Seguridad:} la contraseña está cifrada y fuera del repositorio. \textbf{Costos:} nivel estándar gratuito. \\
+Security groups & Base abierta a internet & RNF-18 & \textbf{Seguridad:} el puerto 5432 solo acepta la EC2, Glue y la IP del equipo; el 8000 solo la IP del equipo. \\
+IAM \texttt{LabRole} y \texttt{LabInstanceProfile} & Credenciales en la instancia & RNF-18 & \textbf{Seguridad:} la EC2 y Glue obtienen permisos por rol, sin llaves guardadas. \\
+\bottomrule
+\caption{Servicios de AWS, alternativa, requisito y pilar.}
+\end{longtable}
+
+\subsection{Proyección de costos}
+\textbf{Supuestos:} precios públicos bajo demanda en us-east-1; 730 horas al mes en operación continua; ETL horario según SUP-49; en el laboratorio, unas 60 horas encendido al mes, con RDS y EC2 detenidas el resto del tiempo (el almacenamiento se sigue cobrando).
+
+\begin{longtable}{@{}L{3.6cm} L{6.0cm} R{2.4cm} R{2.6cm}@{}}
+\toprule \textbf{Servicio} & \textbf{Supuesto} & \textbf{24/7 al mes} & \textbf{Laboratorio} \\ \midrule \endfirsthead
+\toprule \textbf{Servicio} & \textbf{Supuesto} & \textbf{24/7 al mes} & \textbf{Laboratorio} \\ \midrule \endhead
+RDS \texttt{db.t3.micro} (OLTP y OLAP) & US\$0,017 por hora & US\$12,41 & US\$1,02 \\
+Almacenamiento RDS & 20~GB gp3 a US\$0,115 por GB & US\$2,30 & US\$2,30 \\
+EC2 \texttt{t3.small} & US\$0,0208 por hora & US\$15,18 & US\$1,25 \\
+EBS de la EC2 & 8~GB gp3 a US\$0,08 por GB & US\$0,64 & US\$0,64 \\
+Glue job & 2 DPU $\times$ 110~s $\times$ 730 ejecuciones a US\$0,44 por DPU-hora (laboratorio: unas 10) & US\$19,63 & US\$0,27 \\
+Glue crawlers & 2 crawlers, unas 4 ejecuciones al mes, mínimo 10 min & US\$0,30 & US\$0,30 \\
+Data Catalog, S3, endpoint, SSM & Capas gratuitas, menos de 1~GB & US\$0,10 & US\$0,10 \\
+\midrule
+\textbf{Total} & & \textbf{US\$50,56} & \textbf{US\$5,88} \\
+\bottomrule
+\caption{Proyección de costo mensual.}
+\end{longtable}
+
+La partida que más pesa en operación continua es el ETL horario, más que la base. Si el área comercial aceptara datos de un día (ETL diario), el total bajaría a unos US\$31,7.
+
+\subsubsection{Escenario de crecimiento $\times$10}
+\begin{longtable}{@{}L{3.2cm} L{6.4cm} R{2.6cm} L{3.4cm}@{}}
+\toprule \textbf{Escenario} & \textbf{Qué cambia} & \textbf{Total al mes} & \textbf{Decisión} \\ \midrule \endfirsthead
+\toprule \textbf{Escenario} & \textbf{Qué cambia} & \textbf{Total al mes} & \textbf{Decisión} \\ \midrule \endhead
+Base & 150 mil reservas, ETL horario & US\$50,6 & --- \\
+Volumen $\times$10 & 1,5 millones de reservas (cerca de 1~GB). La \texttt{db.t3.micro} (1~GB de RAM) ya no mantiene en memoria las tablas calientes y pasa a \texttt{db.t3.small} (+US\$12,4). El job recalcula todo y pasa de unos 2 a unos 4 minutos (Glue $\approx$ US\$42,8). & US\$86 & ETL incremental por marca de agua, como prevé el diseño: Glue vuelve a $\approx$ US\$20 y el total a $\approx$ US\$63. \\
+Frecuencia $\times$10 & ETL cada 6 minutos: unas 7.300 ejecuciones al mes. Glue sube a $\approx$ US\$196. & US\$227 & No se justifica: SUP-49 tolera 60 minutos. Si el negocio lo exigiera, CDC con DMS sería más barato que tantos arranques de Spark. \\
+\bottomrule
+\caption{Efecto en el costo de multiplicar por 10 el volumen o la frecuencia.}
+\end{longtable}
+
+\textbf{Optimización de costos.} El costo crece por dos causas distintas y cada una tiene su respuesta. El volumen se resuelve ajustando la talla de la base un paso (micro a small), sin cambiar de arquitectura. La frecuencia se resuelve no aumentándola, porque el requisito no lo pide. El ETL actual recalcula todo en cada ejecución, lo que hoy es barato, pero su costo crece en proporción al volumen; es la primera pieza que se rediseña al crecer, y la marca de agua de la Sección~\ref{sec:backend} ya está prevista para eso.
+
+\textbf{Sostenibilidad.} Ejecutar el ETL diez veces más seguido multiplica el cómputo consumido sin cambiar ninguna decisión del área comercial. Detener RDS y EC2 fuera de uso, procesar solo los cambios y no encender un clúster de Spark para resultados que nadie consulta reducen la energía por resultado útil. Pasar a instancias Graviton (\texttt{t4g}) bajaría cerca de 20\,\% el costo y el consumo con el mismo rendimiento.
+
+% =====================================================================
+\appendix
+\section{Bitácora de prompts}
+\label{sec:prompts}
+\begin{longtable}{@{}L{1.2cm} L{5.4cm} L{4.2cm} L{4.4cm}@{}}
+\toprule
+\textbf{\#} & \textbf{Prompt (resumen)} & \textbf{Salida del asistente} & \textbf{Corrección del equipo} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Prompt (resumen)} & \textbf{Salida del asistente} & \textbf{Corrección del equipo} \\
+\midrule
+\endhead
+1 & \textit{[Completar: prompt usado para el diseño de requisitos y supuestos.]} & & \\
+2 & \textit{[Completar: prompt usado para el modelo entidad-relación.]} & & \\
+3 & \textit{[Completar: prompt usado para la arquitectura de backend y frontend.]} & & \\
+4 & Conectarse a AWS con las credenciales de la sesión; ejecutar todo en la nube; proponer un plan y repartir el trabajo entre agentes. & Plan en seis fases: código, infraestructura base, API y pruebas, Glue, respaldo y apagado. & Se aprobó el plan y se pidió incluir el respaldo en GitHub. \\
+5 & Especificación común con tablas, endpoints y regla de concurrencia para el código y la infraestructura. & Código de la API, esquema, datos de ejemplo, pruebas y job ETL; scripts de infraestructura. & Se exigió no abrir nunca el puerto 5432 a 0.0.0.0/0, por un incidente previo de \emph{ransomware} en una base expuesta del laboratorio. \\
+6 & Tener en cuenta el enunciado y el \emph{harness} de la siguiente fase del curso. & Se detectó que Aurora \texttt{db.t3.medium} no estaría permitida. & Se recreó la base como RDS \texttt{db.t3.micro} y se ajustó el contrato de la API (\texttt{flight\_id} de texto, \texttt{passenger\_name}). \\
+7 & Revisión del código generado antes de la prueba de concurrencia. & La API devolvía 503 al agotarse el pool de conexiones. & Se amplió el pool a 20 conexiones por \emph{worker} y se repitió la prueba hasta cero respuestas 5xx. \\
+8 & Revisión del job ETL. & \texttt{bookings} contaba tramos confirmados y cancelados. & Se redefinió como solo confirmados y se ajustó \texttt{cancel\_rate}. \\
+9 & Limpiar los vuelos creados por las pruebas y volver a ejecutar el ETL. & Script transaccional que aborta si una reserva de prueba toca vuelos reales. & Se borraron 21 vuelos y 35 reservas de prueba; la analítica quedó con 48 y 12 filas. \\
+10 & Revisión del documento frente a lo desplegado. & La tabla de estado de los RNF marcaba como Implementado el registro de eventos y el crédito de agencias, que el prototipo no tiene. & Se corrigió el estado de cada requisito según lo que el prototipo realmente hace. \\
+\bottomrule
+\caption{Bitácora de prompts.}
+\end{longtable}
+
+\end{document}

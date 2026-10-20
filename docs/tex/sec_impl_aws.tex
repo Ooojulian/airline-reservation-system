@@ -1,0 +1,315 @@
+% =====================================================================
+\section{Primera implementación del backend}
+\label{sec:impl}
+
+\subsection{Alcance de la implementación}
+La implementación no construye el sistema completo de las secciones anteriores. Construye el \textbf{núcleo transaccional}: búsqueda, reserva directa y con escalas, pago simulado, consulta y cancelación, sobre un modelo de datos reducido que conserva el invariante de inventario. El criterio para elegir qué implementar fue el mismo que gobierna todo el documento: todo lo que toca el invariante (RNF-06 a RNF-08) se implementa y se prueba; lo que no lo toca (agencias con crédito, bloqueos temporales, cupones, asientos, registro de eventos) queda en el diseño.
+
+\begin{itemize}
+  \item \textbf{Repositorio:} \url{https://github.com/Ooojulian/airline-reservation-system}.
+  \item \textbf{Base de datos:} Amazon RDS for PostgreSQL 16.15, instancia \texttt{db.t3.micro}, una zona, almacenamiento cifrado.
+  \item \textbf{API:} FastAPI con Uvicorn (2 \emph{workers}) en un contenedor Docker sobre una EC2 \texttt{t3.small}.
+  \item \textbf{Ejecución:} todo corre en AWS Academy Learner Lab. Ninguna prueba ni base de datos se ejecutó en un equipo local.
+\end{itemize}
+
+\subsection{Estructura del repositorio}
+\begin{longtable}{@{}L{5.0cm} L{10.6cm}@{}}
+\toprule \textbf{Ruta} & \textbf{Contenido} \\ \midrule \endfirsthead
+\toprule \textbf{Ruta} & \textbf{Contenido} \\ \midrule \endhead
+\texttt{backend/app/main.py} & Endpoints y lógica de reserva con control de concurrencia. \\
+\texttt{backend/app/db.py} & Pool de conexiones (psycopg~3, hasta 20 conexiones por \emph{worker}, SSL obligatorio). \\
+\texttt{backend/schema.sql} & DDL del modelo transaccional implementado (10 tablas). \\
+\texttt{backend/schema\_olap.sql} & DDL de la base analítica (2 tablas de hechos). \\
+\texttt{backend/seed.sql} & Datos de ejemplo generados en SQL, reproducibles. \\
+\texttt{backend/Dockerfile}, \texttt{run\_api.sh} & Imagen de la API y arranque leyendo credenciales de SSM Parameter Store. \\
+\texttt{tests/test\_api.py} & 11 pruebas (20 casos al contar las rondas de concurrencia). \\
+\texttt{tests/p95\_search.py} & Medición de latencia de búsqueda con clientes concurrentes. \\
+\texttt{infra/1\_red\_y\_rds.sh} & Security groups, RDS, parámetros SSM, bucket S3 y endpoint de S3. \\
+\texttt{infra/2\_esquemas\_y\_datos.sh} & Crea las dos bases y carga esquema y datos (se ejecuta dentro de la EC2). \\
+\texttt{infra/3\_ec2\_api.sh} & EC2, Docker y despliegue de la API. \\
+\texttt{infra/4\_glue.sh} & Conexiones JDBC, crawlers y job de Glue. \\
+\texttt{infra/glue/etl\_oltp\_to\_olap.py} & Job ETL (PySpark). \\
+\texttt{infra/apagar.sh}, \texttt{encender.sh} & Detienen y reinician RDS y EC2 entre sesiones. \\
+\texttt{infra/exported/} & Definiciones de los recursos de AWS exportadas en JSON, sin contraseñas. \\
+\texttt{evidence/} & Salidas de las pruebas, de la latencia y de Glue. \\
+\bottomrule
+\caption{Estructura del repositorio.}
+\end{longtable}
+
+\subsection{Modelo implementado frente al modelo diseñado}
+El modelo de la Sección~\ref{sec:er} tiene 24 entidades. El implementado tiene 10 tablas. La reducción conserva las tres decisiones que el enunciado pide resolver: itinerario con escalas, vuelo recurrente y control de inventario.
+
+\begin{longtable}{@{}L{4.4cm} L{4.0cm} L{7.2cm}@{}}
+\toprule \textbf{Diseño (Sección~\ref{sec:er})} & \textbf{Implementado} & \textbf{Qué se conserva y qué se pierde} \\ \midrule \endfirsthead
+\toprule \textbf{Diseño (Sección~\ref{sec:er})} & \textbf{Implementado} & \textbf{Qué se conserva y qué se pierde} \\ \midrule \endhead
+\texttt{airport}, \texttt{route} & \texttt{airports}, \texttt{routes} & Igual. Sin zona horaria IANA: todas las rutas del prototipo son nacionales. \\
+\texttt{aircraft\_type}, \texttt{aircraft}, \texttt{seat} & \texttt{aircraft} & Una tabla con la capacidad total. Sin mapa de asientos. \\
+\texttt{scheduled\_flight}, \texttt{flight\_instance} & \texttt{scheduled\_flights}, \texttt{flights} & Se conserva la separación entre vuelo programado y vuelo con fecha. \\
+\texttt{flight\_inventory}, \texttt{fare\_bucket} & Columna \texttt{flights.seats\_available} & El contador vive en la fila del vuelo, con \texttt{CHECK (seats\_available BETWEEN 0 AND capacity)}. Se pierde el cupo por cabina y por clase: ECONOMY y BUSINESS comparten el cupo del vuelo. \\
+\texttt{inventory\_hold} & No se implementa & El pago se aprueba en el mismo acto de la reserva, así que no hay bloqueos temporales que expirar. \\
+\texttt{fare\_class}, \texttt{fare\_rule} & \texttt{fare\_rules} & Dos clases con multiplicador por anticipación (0, 7 y 21 días). Sin matriz de reembolso. \\
+\texttt{reservation}, \texttt{itinerary\_segment} & \texttt{reservations}, \texttt{reservation\_segments} & Una reserva con hasta cuatro tramos, cada uno con su precio congelado. \\
+\texttt{passenger}, \texttt{ticket}, \texttt{coupon} & \texttt{passengers} y el tramo & Un pasajero por reserva. El tramo hace el papel del cupón: ocupa una silla y es el grano del ETL. \\
+\texttt{seat\_assignment} & No se implementa & Asignación en \emph{check-in}, fuera del prototipo. \\
+\texttt{payment}, \texttt{refund} & \texttt{payments} & Monto, proveedor, referencia y estado (\texttt{APPROVED} o \texttt{REFUNDED}). Nunca datos de tarjeta. \\
+\texttt{agency}, \texttt{agency\_commission}, \texttt{agency\_credit}, \texttt{credit\_movement} & No se implementan & Las agencias usan la misma API sin autenticación propia ni crédito. \\
+\texttt{reservation\_event} & Columnas \texttt{created\_at} y \texttt{updated\_at} & Se pierde el histórico completo de transiciones. \\
+\bottomrule
+\caption{Correspondencia entre el modelo diseñado y el implementado.}
+\end{longtable}
+
+Dos cambios de tipo surgieron al implementar. \texttt{flights.flight\_id} es texto (por ejemplo \texttt{AV101-20260601}) y lo asigna quien crea el vuelo, lo que da un identificador legible y estable para el ETL y para las pruebas. Y \texttt{passengers.document\_id} y \texttt{email} son opcionales, porque la reserva solo exige el nombre del pasajero.
+
+\subsection{Endpoints}
+\begin{longtable}{@{}L{5.2cm} L{6.6cm} L{3.8cm}@{}}
+\toprule \textbf{Método y ruta} & \textbf{Qué hace} & \textbf{Respuestas} \\ \midrule \endfirsthead
+\toprule \textbf{Método y ruta} & \textbf{Qué hace} & \textbf{Respuestas} \\ \midrule \endhead
+\texttt{GET /flights/search} & Vuelos directos con sillas por origen, destino y fecha. & 200 · 422 \\
+\texttt{GET /flights/\{flight\_id\}} & Inventario de un vuelo concreto. & 200 · 404 \\
+\texttt{POST /reservations} & Reserva directa o con escalas (\texttt{connection\_flight\_ids}), con pago simulado en el mismo acto. & 201 · 404 · 409 · 422 \\
+\texttt{GET /reservations/\{id\}} & Consulta de una reserva con sus tramos y su pago. & 200 · 404 \\
+\texttt{POST /reservations/\{id\}/cancel} & Cancela, devuelve una silla por tramo y marca el pago como reembolsado. & 200 · 404 · 409 \\
+\texttt{POST /admin/flights} & Registra un vuelo con fecha; crea la ruta si no existe. & 201 · 409 · 422 \\
+\texttt{GET /health} & Estado de la API y de la conexión a la base. & 200 \\
+\bottomrule
+\caption{Endpoints implementados.}
+\end{longtable}
+
+La documentación interactiva (OpenAPI) queda disponible en \texttt{/docs} de la misma API.
+
+\subsection{Mecanismo de concurrencia tal como se implementó}
+La Sección~\ref{sec:backend} adopta bloqueo pesimista con \texttt{SELECT \ldots FOR UPDATE}. La implementación usa la forma equivalente en una sola sentencia: un \texttt{UPDATE} condicional.
+
+\begin{lstlisting}[language=SQL,caption={Descuento de una silla por tramo, dentro de la transacción de la reserva.}]
+UPDATE flights
+   SET seats_available = seats_available - 1
+ WHERE flight_id = %s
+   AND seats_available > 0
+   AND flight_date >= CURRENT_DATE
+RETURNING price_cents, flight_date;
+\end{lstlisting}
+
+PostgreSQL toma el mismo bloqueo de fila que tomaría \texttt{FOR UPDATE}. La diferencia es que la lectura, la validación y la escritura ocurren en una sola sentencia, sin un viaje de ida y vuelta entre la aplicación y la base mientras se sostiene el bloqueo. Cuando dos peticiones llegan a la vez, la segunda espera a que termine la primera y vuelve a evaluar \texttt{seats\_available > 0} con el valor ya confirmado. Si la condición falla, el \texttt{UPDATE} no afecta filas y la API responde 409 de inmediato (RNF-07).
+
+El flujo de \texttt{POST /reservations} es:
+\begin{enumerate}
+  \item Validar que los vuelos existen (404), que los tramos encadenan y que las fechas no retroceden ni ya pasaron (422).
+  \item Abrir una transacción y ejecutar el \texttt{UPDATE} anterior para cada vuelo, \textbf{en orden ascendente de \texttt{flight\_id}} (RF-37, RN-04).
+  \item Si un tramo no tiene silla: \texttt{ROLLBACK}, que devuelve las sillas ya tomadas en los tramos anteriores, y respuesta 409 (RNF-08).
+  \item Calcular el precio con la regla de \texttt{fare\_rules} de mayor \texttt{min\_days\_before} que no supere los días que faltan para el primer tramo.
+  \item Insertar pasajero, reserva, tramos y pago \texttt{APPROVED}, y confirmar.
+\end{enumerate}
+
+El \texttt{CHECK} de la tabla es una segunda barrera en el motor: aunque la aplicación tuviera un error, la base no aceptaría \texttt{seats\_available} negativo. La cancelación usa el mismo orden ascendente para devolver las sillas y un \texttt{UPDATE \ldots WHERE status = 'CONFIRMED'} para que dos cancelaciones simultáneas no devuelvan la silla dos veces.
+
+\subsection{Prueba de concurrencia y evidencia}
+\textbf{Método.} La prueba crea un vuelo con \texttt{POST /admin/flights} y lanza 50 peticiones \texttt{POST /reservations} desde 50 hilos que esperan en una barrera (\texttt{threading.Barrier}) y salen al mismo tiempo. Se repite 5 rondas con 1 silla y 5 rondas con 5 sillas. Después de cada ronda se consulta el vuelo y se verifica que quedó en 0 sillas. Se ejecutó en la EC2 contra la API desplegada y la base RDS el 19 de octubre de 2026.
+
+\begin{longtable}{@{}L{3.6cm} C{1.9cm} C{1.9cm} C{1.9cm} C{1.9cm} C{1.9cm}@{}}
+\toprule \textbf{Escenario} & \textbf{Ronda 1} & \textbf{Ronda 2} & \textbf{Ronda 3} & \textbf{Ronda 4} & \textbf{Ronda 5} \\ \midrule \endfirsthead
+\toprule \textbf{Escenario} & \textbf{Ronda 1} & \textbf{Ronda 2} & \textbf{Ronda 3} & \textbf{Ronda 4} & \textbf{Ronda 5} \\ \midrule \endhead
+1 silla, 50 peticiones & 1 / 49 & 1 / 49 & 1 / 49 & 1 / 49 & 1 / 49 \\
+5 sillas, 50 peticiones & 5 / 45 & 5 / 45 & 5 / 45 & 5 / 45 & 5 / 45 \\
+\bottomrule
+\caption{Respuestas 201 / 409 por ronda. En ninguna ronda hubo respuestas 5xx y todos los vuelos terminaron con \texttt{seats\_available = 0}.}
+\end{longtable}
+
+Resultados adicionales:
+\begin{itemize}
+  \item \textbf{Suite completa:} 20 de 20 casos aprobados en 2,61~s. Incluye reserva directa, reserva con escala, tramos que no encadenan (422), vuelo inexistente (404), consulta, cancelación, doble cancelación (409), vuelo duplicado (409) y la prueba de itinerario todo o nada: cuando el segundo tramo no tiene sillas, la reserva se rechaza y el primer tramo conserva sus sillas.
+  \item \textbf{Latencia de búsqueda:} 100 peticiones con 20 clientes concurrentes: p50 = 41~ms, p95 = 83~ms, máximo 105~ms.
+  \item \textbf{Consistencia de los datos de ejemplo:} 1.448 vuelos, 150.197 reservas, 170.135 tramos y 18.063 cancelaciones. La consulta que compara \texttt{capacity - seats\_available} con los tramos confirmados de cada vuelo devuelve 0 vuelos inconsistentes.
+\end{itemize}
+
+Evidencia en el repositorio: \texttt{evidence/evidencia\_pruebas.txt} (salida de \texttt{pytest -v -s}) y \texttt{evidence/p95\_search.txt}.
+
+\textbf{Hallazgo durante la prueba.} Con el pool inicial de 10 conexiones por \emph{worker}, las 50 peticiones simultáneas quedaban esperando conexión y la API podía responder 503 al agotarse la espera. Un 503 es un 5xx y viola RNF-07. Se amplió el pool a 20 conexiones por \emph{worker} (40 en total, la mitad de las cerca de 80 que admite una \texttt{db.t3.micro}) y desde entonces no se registró ningún 5xx.
+
+\subsection{Datos de ejemplo}
+\begin{itemize}
+  \item 12 aeropuertos y 8 rutas nacionales (BOG--MDE, BOG--CLO, BOG--CTG, MDE--CTG y sus inversas).
+  \item Un vuelo diario de 150 sillas por ruta, del 1 de junio al 28 de noviembre de 2026: 1.448 vuelos.
+  \item 150.197 reservas, cerca de 12\,\% canceladas, 85\,\% ECONOMY y 15\,\% BUSINESS. Unas 20.000 tienen escala.
+  \item Se generan con \texttt{generate\_series} y una semilla fija, en unos 17~s, y dejan el inventario consistente con los tramos confirmados.
+\end{itemize}
+
+Esta volumetría es mucho menor que la de la Sección~\ref{sec:volumetria}. Basta para probar el invariante y alimentar el ETL, pero no para medir el comportamiento con la carga pico proyectada.
+
+\subsection{Guía de ejecución}
+\begin{enumerate}
+  \item Configurar AWS CLI con las credenciales de la sesión del Learner Lab (o abrir CloudShell).
+  \item \texttt{bash infra/1\_red\_y\_rds.sh}: crea security groups, RDS, parámetros SSM, bucket y endpoint de S3.
+  \item \texttt{bash infra/3\_ec2\_api.sh}: crea la EC2, sube el código y ejecuta en ella \texttt{2\_esquemas\_y\_datos.sh} y \texttt{run\_api.sh} mediante SSM Run Command.
+  \item \texttt{bash infra/4\_glue.sh}: crea las conexiones, los crawlers y el job, y los ejecuta.
+  \item Pruebas: en la EC2, \texttt{BASE\_URL=http://localhost:8000 pytest -v -s tests/}.
+  \item Al terminar la sesión: \texttt{bash infra/apagar.sh}. Al volver: \texttt{bash infra/encender.sh}, que imprime la nueva IP pública.
+\end{enumerate}
+
+\subsection{Desviaciones respecto al diseño}
+\begin{longtable}{@{}L{4.6cm} L{6.6cm} L{4.4cm}@{}}
+\toprule \textbf{Desviación} & \textbf{Motivo} & \textbf{Sección afectada} \\ \midrule \endfirsthead
+\toprule \textbf{Desviación} & \textbf{Motivo} & \textbf{Sección afectada} \\ \midrule \endhead
+De 24 entidades a 10 tablas. & Alcance del parcial y presupuesto del laboratorio. Se conserva todo lo que toca el invariante. & \ref{sec:er} \\
+Sin bloqueo temporal de 15 minutos; pago aprobado en el mismo acto. & Elimina expiraciones, barridos y la conciliación de autorizaciones huérfanas. La reserva y el pago confirmados son una sola transacción. & \ref{sec:backend}, pago en dos fases \\
+\texttt{UPDATE} condicional en lugar de \texttt{SELECT \ldots FOR UPDATE}. & Mismo bloqueo de fila en una sola sentencia y sin viaje de ida y vuelta con el bloqueo tomado. & \ref{sec:backend}, concurrencia \\
+Sin \texttt{lock\_timeout} configurado. & La transacción de reserva dura milisegundos y la prueba resolvió cada ronda de 50 peticiones sin esperas largas. Queda como ajuste para producción. & \ref{sec:backend}, parámetros \\
+Un solo proceso (FastAPI) en lugar de cuatro servicios. & En el prototipo no hay \texttt{gateway} ni servicio de búsqueda separado; el código vive en un módulo. La regla de la frontera transaccional se cumple igual: todo el núcleo está en un proceso y una base. & \ref{sec:despliegue} \\
+Búsqueda solo de vuelos directos. & Las reservas con escala se crean indicando los vuelos de conexión; la construcción automática de itinerarios con MCT (RF-02, RF-03) no se implementó. & \ref{sec:rf} \\
+Sin agencias, crédito ni autenticación B2B. & No afecta el invariante de sillas. RNF-09 y RNF-17 quedan como Excluido en el prototipo. & \ref{sec:backend}, agencias \\
+Sin registro de eventos; solo \texttt{created\_at} y \texttt{updated\_at}. & Alcance. RNF-24 a RNF-26 quedan como Diseñado. & \ref{sec:er}, auditoría \\
+Pool de 20 conexiones por \emph{worker}. & Hallazgo de la prueba de concurrencia: con 10 aparecían 503. & Esta sección \\
+Base \texttt{db.t3.micro} en una zona, sin réplica. & Cumple RNF-06 a RNF-08 con p95 de 83~ms. Una instancia mayor o un clúster no tendrían beneficio medible en el laboratorio. & \ref{sec:aws} \\
+\bottomrule
+\caption{Desviaciones de la implementación respecto al diseño.}
+\end{longtable}
+
+% =====================================================================
+\section{Implementación en AWS: ETL, catálogo de datos y costos}
+\label{sec:aws}
+
+\subsection{Arquitectura desplegada}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw=usaAzul, thick, rounded corners=2pt, align=center, minimum height=1.0cm, inner sep=5pt, font=\small, fill=white},
+  zone/.style={draw=usaGris, dashed, rounded corners=4pt, inner sep=8pt},
+  arr/.style={-{Stealth[length=2.5mm]}, thick, usaGris},
+  lbl/.style={font=\scriptsize, text=usaGris, align=center}]
+  \node[box] (user) at (0,0) {Pasajero / agencia\\(HTTP)};
+  \node[box] (ec2) at (4.2,0) {EC2 \texttt{t3.small}\\Docker: FastAPI\\(2 \emph{workers})};
+  \node[box] (oltp) at (9.0,0.9) {\texttt{airline\_oltp}\\(10 tablas, 3FN)};
+  \node[box] (olap) at (9.0,-0.9) {\texttt{airline\_olap}\\(2 tablas de hechos)};
+  \node[box] (job) at (4.2,-3.0) {AWS Glue job\\PySpark, 2 $\times$ G.1X};
+  \node[box] (crawl) at (9.0,-3.0) {2 crawlers\\(bajo demanda)};
+  \node[box] (cat) at (13.0,-3.0) {Glue Data Catalog\\\texttt{airline\_oltp}\\\texttt{airline\_olap}};
+  \node[box] (s3) at (0,-3.0) {S3\\script y evidencias};
+  \node[box] (ssm) at (0,-1.5) {SSM\\Parameter Store};
+  \node[zone, fit=(oltp)(olap), label={[lbl]above:RDS PostgreSQL 16 \texttt{db.t3.micro}}] (rds) {};
+  \draw[arr] (user) -- node[lbl,above]{:8000} (ec2);
+  \draw[arr] (ec2) -- node[lbl,above,sloped]{SQL, SSL} (oltp.west);
+  \draw[arr] (ssm) -- node[lbl,above,sloped]{credenciales} (ec2);
+  \draw[arr] (oltp.south west) -- node[lbl,left]{JDBC\\lectura} (job);
+  \draw[arr] (job) -- node[lbl,below,sloped]{JDBC escritura} (olap.west);
+  \draw[arr] (s3) -- node[lbl,above]{endpoint Gateway} (job);
+  \draw[arr] (rds.south) -- (crawl);
+  \draw[arr] (crawl) -- (cat);
+\end{tikzpicture}
+\caption{Arquitectura desplegada en AWS Academy Learner Lab (us-east-1). Todos los componentes están en la VPC por defecto; no hay NAT Gateway ni balanceador.}
+\label{fig:aws}
+\end{figure}
+
+\subsection{Qué se copia a la base analítica}
+No se copia ninguna tabla tal cual. El job lee \texttt{flights}, \texttt{reservations}, \texttt{reservation\_segments} y \texttt{fare\_rules}, y produce dos tablas agregadas:
+
+\begin{longtable}{@{}L{3.6cm} L{2.4cm} L{9.6cm}@{}}
+\toprule \textbf{Tabla} & \textbf{Grano} & \textbf{Columnas y pregunta que responde} \\ \midrule \endfirsthead
+\toprule \textbf{Tabla} & \textbf{Grano} & \textbf{Columnas y pregunta que responde} \\ \midrule \endhead
+\texttt{fact\_route\_month} & Ruta $\times$ mes & \texttt{seats\_capacity}, \texttt{seats\_sold}, \texttt{occupancy}, \texttt{revenue\_cents}, \texttt{bookings}, \texttt{cancellations}. Responde ocupación por ruta e ingresos por ruta. \\
+\texttt{fact\_fare\_month} & Clase $\times$ mes & \texttt{revenue\_cents}, \texttt{bookings}, \texttt{cancellations}, \texttt{cancel\_rate}. Responde ingresos por tarifa y patrón de cancelación. \\
+\bottomrule
+\caption{Tablas de la base analítica implementada.}
+\end{longtable}
+
+Reglas de la transformación:
+\begin{itemize}
+  \item Se cuenta \textbf{por tramo}, no por reserva: un itinerario con escala ocupa una silla en cada vuelo. Es la misma razón por la que el diseño fija el grano en el cupón (Sección~\ref{sec:estrella}).
+  \item \texttt{seats\_sold}, \texttt{bookings} e ingresos cuentan solo tramos \texttt{CONFIRMED}. \texttt{cancel\_rate} = \texttt{cancellations} / (\texttt{bookings} + \texttt{cancellations}).
+  \item El mes es el de la fecha del vuelo, no el de la compra, porque la ocupación se mide sobre el vuelo.
+  \item No se copia ningún dato personal ni de pago: ni nombres, ni documentos, ni correos, ni referencias de pago (RNF-16).
+\end{itemize}
+
+\textbf{Relación con el modelo en estrella.} La Sección~\ref{sec:estrella} diseña tres tablas de hechos y siete dimensiones. Lo implementado es una versión agregada de ese diseño: las dos tablas equivalen a consultas ya resueltas sobre \texttt{fact\_coupon} agrupadas por ruta y mes y por clase y mes. Con 170.000 tramos no se justifica mantener el grano de cupón en la analítica; con el volumen proyectado sí, y por eso el diseño se conserva como objetivo.
+
+\textbf{Resultado.} Tras la última ejecución, \texttt{fact\_route\_month} tiene 48 filas (8 rutas $\times$ 6 meses, de junio a noviembre de 2026) y \texttt{fact\_fare\_month} tiene 12 (2 clases $\times$ 6 meses). La ruta con mayor ocupación es BOG--MDE en julio de 2026, con 74,0\,\%.
+
+\subsection{Esquema analítico frente al transaccional}
+Son esquemas distintos a propósito, y es la misma tesis de la Sección~\ref{sec:er}: la base transaccional está en tercera forma normal para evitar anomalías bajo escritura concurrente; la analítica está desnormalizada y preagregada porque solo se lee, y el área comercial necesita respuestas sin unir cinco tablas. Si la analítica copiara el esquema transaccional, cada consulta de ocupación repetiría la agregación sobre todos los tramos.
+
+\subsection{Servicio de ETL}
+\begin{longtable}{@{}L{3.6cm} L{6.0cm} L{6.0cm}@{}}
+\toprule \textbf{Opción en el Learner Lab} & \textbf{Ventaja} & \textbf{Por qué no se eligió} \\ \midrule \endfirsthead
+\toprule \textbf{Opción en el Learner Lab} & \textbf{Ventaja} & \textbf{Por qué no se eligió} \\ \midrule \endhead
+AWS Lambda con SQL & Muy barata para cargas pequeñas. & Límite de 15 minutos, conexión manual a la VPC y no registra metadatos en el catálogo. No absorbe el crecimiento de RNF-22. \\
+\texttt{postgres\_fdw} dentro de RDS & Sin servicio adicional. & Acopla las dos bases, y la carga analítica corre en el mismo motor que las reservas, contra RNF-30. \\
+AWS DMS & Replicación continua. & Exige una instancia de replicación encendida todo el tiempo; el diseño descarta CDC por costo (Sección~\ref{sec:backend}). \\
+\textbf{AWS Glue (job PySpark)} & Servicio administrado, se paga por segundo de ejecución, usa las mismas conexiones que los crawlers y escala con más \emph{workers}. & \textbf{Elegido.} \\
+\bottomrule
+\caption{Opciones de ETL consideradas.}
+\end{longtable}
+
+Configuración del job \texttt{airline-etl-oltp-to-olap}: Glue 4.0, 2 \emph{workers} G.1X, rol \texttt{LabRole}, \emph{timeout} de 15 minutos y sin reintentos. Lee por JDBC con lecturas simples en \texttt{READ COMMITTED}, que en PostgreSQL no bloquean escrituras, y escribe en \texttt{airline\_olap} con \texttt{TRUNCATE} más inserción, de modo que cada ejecución deja las tablas completas y es repetible. Las dos ejecuciones registradas terminaron en estado SUCCEEDED: 110~s (220 DPU-s) y 106~s.
+
+\subsection{Conexión con el Glue Data Catalog}
+\begin{itemize}
+  \item \textbf{Conexiones JDBC:} \texttt{airline-oltp-conn} y \texttt{airline-olap-conn}, una por base, en la subred de la instancia RDS (us-east-1a) y con su security group.
+  \item \textbf{Red:} el security group de la base tiene una regla que se referencia a sí mismo, porque los \emph{workers} de Glue se comunican entre sí por cualquier puerto. Glue necesita leer el script de S3 desde la VPC; en lugar de un NAT Gateway (unos US\$33 al mes) se usa un endpoint Gateway de S3, que es gratuito.
+  \item \textbf{Rol IAM:} \texttt{LabRole}, el único que permite el Learner Lab.
+  \item \textbf{Crawlers:} \texttt{airline-oltp-crawler} (ruta \texttt{airline\_oltp/public/\%}) y \texttt{airline-olap-crawler} (\texttt{airline\_olap/public/\%}), sin programación.
+  \item \textbf{Resultado:} la base \texttt{airline\_oltp} del catálogo tiene 10 tablas y \texttt{airline\_olap} tiene 2, con sus columnas y tipos. Evidencia en \texttt{evidence/glue\_evidencia.txt} e \texttt{infra/exported/}.
+\end{itemize}
+
+\subsection{Frecuencia de ejecución}
+\begin{longtable}{@{}L{3.0cm} L{3.4cm} L{3.0cm} L{6.2cm}@{}}
+\toprule \textbf{Frecuencia} & \textbf{Frescura} & \textbf{Costo Glue al mes} & \textbf{Comentario} \\ \midrule \endfirsthead
+\toprule \textbf{Frecuencia} & \textbf{Frescura} & \textbf{Costo Glue al mes} & \textbf{Comentario} \\ \midrule \endhead
+Una sola vez & Se congela & $\sim$US\$0,03 & No responde la pregunta de negocio con el tiempo. \\
+Bajo demanda & La de la última ejecución & $<$ US\$0,30 & \textbf{Usada en el laboratorio:} una ejecución programada fallaría con RDS detenida. \\
+Diaria & Hasta 24~h & $\sim$US\$0,80 & Suficiente para un tablero gerencial. \\
+Horaria & Hasta 60~min & $\sim$US\$19,60 & \textbf{Objetivo de producción} según SUP-49. \\
+Por evento (CDC) & Segundos & $>$ US\$50 & Requiere una instancia de replicación encendida; descartado en el diseño. \\
+\bottomrule
+\caption{Frecuencia del ETL frente a frescura y costo (2 DPU, unos 110~s por ejecución, US\$0,44 por DPU-hora).}
+\end{longtable}
+
+\subsection{Justificación de servicios}
+\begin{longtable}{@{}L{3.0cm} L{2.6cm} L{2.6cm} L{7.4cm}@{}}
+\toprule \textbf{Servicio} & \textbf{Alternativa} & \textbf{Requisito} & \textbf{Pilar Well-Architected} \\ \midrule \endfirsthead
+\toprule \textbf{Servicio} & \textbf{Alternativa} & \textbf{Requisito} & \textbf{Pilar Well-Architected} \\ \midrule \endhead
+RDS PostgreSQL 16, \texttt{db.t3.micro}, cifrada & Aurora PostgreSQL; DynamoDB & RNF-06, RNF-07, RNF-08 & \textbf{Confiabilidad:} transacciones ACID y bloqueo por fila, que DynamoDB no da entre varios ítems sin coste extra. \textbf{Costos:} la talla mínima cumplió las pruebas; Aurora cuesta cerca de 5 veces más sin beneficio medido. \\
+Segunda base \texttt{airline\_olap} en la misma instancia & Otra instancia RDS & RNF-16, RNF-30 & \textbf{Costos:} una segunda instancia duplicaría el gasto. \textbf{Eficiencia de rendimiento:} el modelo agregado se lee sin uniones. \\
+EC2 \texttt{t3.small} con Docker & Elastic Beanstalk; ECS Fargate & RNF-01, RNF-03 & \textbf{Costos:} la opción más barata para un proceso continuo. \textbf{Excelencia operativa:} un script despliega la API y otro la reinicia. \\
+AWS Glue job & Lambda; DMS; \texttt{postgres\_fdw} & RNF-22, RNF-30 & \textbf{Excelencia operativa:} servicio administrado. \textbf{Costos:} se paga solo mientras corre. \\
+Glue crawlers y Data Catalog & Registro manual de tablas & Requisito 5.7 del enunciado & \textbf{Excelencia operativa:} los metadatos se actualizan solos al cambiar el esquema. \\
+S3 con endpoint Gateway & NAT Gateway & RNF-30 & \textbf{Costos:} el endpoint es gratis frente a unos US\$33 al mes. \textbf{Seguridad:} el tráfico no sale a internet. \\
+SSM Parameter Store (SecureString) & Contraseña en el código; Secrets Manager & RNF-18 & \textbf{Seguridad:} la contraseña está cifrada y fuera del repositorio. \textbf{Costos:} nivel estándar gratuito. \\
+Security groups & Base abierta a internet & RNF-18 & \textbf{Seguridad:} el puerto 5432 solo acepta la EC2, Glue y la IP del equipo; el 8000 solo la IP del equipo. \\
+IAM \texttt{LabRole} y \texttt{LabInstanceProfile} & Credenciales en la instancia & RNF-18 & \textbf{Seguridad:} la EC2 y Glue obtienen permisos por rol, sin llaves guardadas. \\
+\bottomrule
+\caption{Servicios de AWS, alternativa, requisito y pilar.}
+\end{longtable}
+
+\subsection{Proyección de costos}
+\textbf{Supuestos:} precios públicos bajo demanda en us-east-1; 730 horas al mes en operación continua; ETL horario según SUP-49; en el laboratorio, unas 60 horas encendido al mes, con RDS y EC2 detenidas el resto del tiempo (el almacenamiento se sigue cobrando).
+
+\begin{longtable}{@{}L{3.6cm} L{6.0cm} R{2.4cm} R{2.6cm}@{}}
+\toprule \textbf{Servicio} & \textbf{Supuesto} & \textbf{24/7 al mes} & \textbf{Laboratorio} \\ \midrule \endfirsthead
+\toprule \textbf{Servicio} & \textbf{Supuesto} & \textbf{24/7 al mes} & \textbf{Laboratorio} \\ \midrule \endhead
+RDS \texttt{db.t3.micro} (OLTP y OLAP) & US\$0,017 por hora & US\$12,41 & US\$1,02 \\
+Almacenamiento RDS & 20~GB gp3 a US\$0,115 por GB & US\$2,30 & US\$2,30 \\
+EC2 \texttt{t3.small} & US\$0,0208 por hora & US\$15,18 & US\$1,25 \\
+EBS de la EC2 & 8~GB gp3 a US\$0,08 por GB & US\$0,64 & US\$0,64 \\
+Glue job & 2 DPU $\times$ 110~s $\times$ 730 ejecuciones a US\$0,44 por DPU-hora (laboratorio: unas 10) & US\$19,63 & US\$0,27 \\
+Glue crawlers & 2 crawlers, unas 4 ejecuciones al mes, mínimo 10 min & US\$0,30 & US\$0,30 \\
+Data Catalog, S3, endpoint, SSM & Capas gratuitas, menos de 1~GB & US\$0,10 & US\$0,10 \\
+\midrule
+\textbf{Total} & & \textbf{US\$50,56} & \textbf{US\$5,88} \\
+\bottomrule
+\caption{Proyección de costo mensual.}
+\end{longtable}
+
+La partida que más pesa en operación continua es el ETL horario, más que la base. Si el área comercial aceptara datos de un día (ETL diario), el total bajaría a unos US\$31,7.
+
+\subsubsection{Escenario de crecimiento $\times$10}
+\begin{longtable}{@{}L{3.2cm} L{6.4cm} R{2.6cm} L{3.4cm}@{}}
+\toprule \textbf{Escenario} & \textbf{Qué cambia} & \textbf{Total al mes} & \textbf{Decisión} \\ \midrule \endfirsthead
+\toprule \textbf{Escenario} & \textbf{Qué cambia} & \textbf{Total al mes} & \textbf{Decisión} \\ \midrule \endhead
+Base & 150 mil reservas, ETL horario & US\$50,6 & --- \\
+Volumen $\times$10 & 1,5 millones de reservas (cerca de 1~GB). La \texttt{db.t3.micro} (1~GB de RAM) ya no mantiene en memoria las tablas calientes y pasa a \texttt{db.t3.small} (+US\$12,4). El job recalcula todo y pasa de unos 2 a unos 4 minutos (Glue $\approx$ US\$42,8). & US\$86 & ETL incremental por marca de agua, como prevé el diseño: Glue vuelve a $\approx$ US\$20 y el total a $\approx$ US\$63. \\
+Frecuencia $\times$10 & ETL cada 6 minutos: unas 7.300 ejecuciones al mes. Glue sube a $\approx$ US\$196. & US\$227 & No se justifica: SUP-49 tolera 60 minutos. Si el negocio lo exigiera, CDC con DMS sería más barato que tantos arranques de Spark. \\
+\bottomrule
+\caption{Efecto en el costo de multiplicar por 10 el volumen o la frecuencia.}
+\end{longtable}
+
+\textbf{Optimización de costos.} El costo crece por dos causas distintas y cada una tiene su respuesta. El volumen se resuelve ajustando la talla de la base un paso (micro a small), sin cambiar de arquitectura. La frecuencia se resuelve no aumentándola, porque el requisito no lo pide. El ETL actual recalcula todo en cada ejecución, lo que hoy es barato, pero su costo crece en proporción al volumen; es la primera pieza que se rediseña al crecer, y la marca de agua de la Sección~\ref{sec:backend} ya está prevista para eso.
+
+\textbf{Sostenibilidad.} Ejecutar el ETL diez veces más seguido multiplica el cómputo consumido sin cambiar ninguna decisión del área comercial. Detener RDS y EC2 fuera de uso, procesar solo los cambios y no encender un clúster de Spark para resultados que nadie consulta reducen la energía por resultado útil. Pasar a instancias Graviton (\texttt{t4g}) bajaría cerca de 20\,\% el costo y el consumo con el mismo rendimiento.
