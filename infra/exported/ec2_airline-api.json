@@ -1,0 +1,173 @@
+{
+    "Reservations": [
+        {
+            "ReservationId": "r-09e07bc8ead062ada",
+            "OwnerId": "930581488240",
+            "Groups": [],
+            "Instances": [
+                {
+                    "Architecture": "x86_64",
+                    "BlockDeviceMappings": [
+                        {
+                            "DeviceName": "/dev/xvda",
+                            "Ebs": {
+                                "AttachTime": "2026-10-20T01:12:00+00:00",
+                                "DeleteOnTermination": true,
+                                "Status": "attached",
+                                "VolumeId": "vol-06555a98e959470d9",
+                                "EbsCardIndex": 0
+                            }
+                        }
+                    ],
+                    "ClientToken": "3ac6bcef-767f-4f29-86e6-53db289e0795",
+                    "EbsOptimized": false,
+                    "EnaSupport": true,
+                    "Hypervisor": "xen",
+                    "IamInstanceProfile": {
+                        "Arn": "arn:aws:iam::930581488240:instance-profile/LabInstanceProfile",
+                        "Id": "AIPA5RKX2UJYG2FN3X2LF"
+                    },
+                    "NetworkInterfaces": [
+                        {
+                            "Association": {
+                                "IpOwnerId": "amazon",
+                                "PublicDnsName": "ec2-3-89-182-46.compute-1.amazonaws.com",
+                                "PublicIp": "3.89.182.46"
+                            },
+                            "Attachment": {
+                                "AttachTime": "2026-10-20T01:11:59+00:00",
+                                "AttachmentId": "eni-attach-0f69bcc3e9ade3d10",
+                                "DeleteOnTermination": true,
+                                "DeviceIndex": 0,
+                                "Status": "attached",
+                                "NetworkCardIndex": 0
+                            },
+                            "Description": "",
+                            "Groups": [
+                                {
+                                    "GroupId": "sg-0b22c99798f6dc60a",
+                                    "GroupName": "airline-api-sg"
+                                }
+                            ],
+                            "Ipv6Addresses": [],
+                            "MacAddress": "0e:ff:f4:88:55:ed",
+                            "NetworkInterfaceId": "eni-030a936d7724b2d7f",
+                            "OwnerId": "930581488240",
+                            "PrivateDnsName": "ip-172-31-33-144.ec2.internal",
+                            "PrivateIpAddress": "172.31.33.144",
+                            "PrivateIpAddresses": [
+                                {
+                                    "Association": {
+                                        "IpOwnerId": "amazon",
+                                        "PublicDnsName": "ec2-3-89-182-46.compute-1.amazonaws.com",
+                                        "PublicIp": "3.89.182.46"
+                                    },
+                                    "Primary": true,
+                                    "PrivateDnsName": "ip-172-31-33-144.ec2.internal",
+                                    "PrivateIpAddress": "172.31.33.144"
+                                }
+                            ],
+                            "SourceDestCheck": true,
+                            "Status": "in-use",
+                            "SubnetId": "subnet-04cc25c5f1dc63df5",
+                            "VpcId": "vpc-055e559fe133bbe1e",
+                            "InterfaceType": "interface",
+                            "Operator": {
+                                "Managed": false
+                            }
+                        }
+                    ],
+                    "RootDeviceName": "/dev/xvda",
+                    "RootDeviceType": "ebs",
+                    "SecurityGroups": [
+                        {
+                            "GroupId": "sg-0b22c99798f6dc60a",
+                            "GroupName": "airline-api-sg"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Tags": [
+                        {
+                            "Key": "Project",
+                            "Value": "airline-system"
+                        },
+                        {
+                            "Key": "Name",
+                            "Value": "airline-api"
+                        }
+                    ],
+                    "VirtualizationType": "hvm",
+                    "CpuOptions": {
+                        "CoreCount": 1,
+                        "ThreadsPerCore": 2
+                    },
+                    "CapacityReservationSpecification": {
+                        "CapacityReservationPreference": "open"
+                    },
+                    "HibernationOptions": {
+                        "Configured": false
+                    },
+                    "MetadataOptions": {
+                        "State": "applied",
+                        "HttpTokens": "required",
+                        "HttpPutResponseHopLimit": 2,
+                        "HttpEndpoint": "enabled",
+                        "HttpProtocolIpv6": "disabled",
+                        "InstanceMetadataTags": "disabled"
+                    },
+                    "EnclaveOptions": {
+                        "Enabled": false
+                    },
+                    "BootMode": "uefi-preferred",
+                    "PlatformDetails": "Linux/UNIX",
+                    "UsageOperation": "RunInstances",
+                    "UsageOperationUpdateTime": "2026-10-20T01:11:59+00:00",
+                    "PrivateDnsNameOptions": {
+                        "HostnameType": "ip-name",
+                        "EnableResourceNameDnsARecord": false,
+                        "EnableResourceNameDnsAAAARecord": false
+                    },
+                    "MaintenanceOptions": {
+                        "AutoRecovery": "default",
+                        "RebootMigration": "default"
+                    },
+                    "CurrentInstanceBootMode": "uefi",
+                    "NetworkPerformanceOptions": {
+                        "BandwidthWeighting": "default"
+                    },
+                    "Operator": {
+                        "Managed": false,
+                        "HiddenByDefault": false
+                    },
+                    "SecondaryInterfaces": [],
+                    "InstanceId": "i-018f40cd1109b7643",
+                    "ImageId": "ami-0567589d25e06853e",
+                    "State": {
+                        "Code": 16,
+                        "Name": "running"
+                    },
+                    "PrivateDnsName": "ip-172-31-33-144.ec2.internal",
+                    "PublicDnsName": "ec2-3-89-182-46.compute-1.amazonaws.com",
+                    "StateTransitionReason": "",
+                    "AmiLaunchIndex": 0,
+                    "ProductCodes": [],
+                    "InstanceType": "t3.small",
+                    "LaunchTime": "2026-10-20T01:11:59+00:00",
+                    "Placement": {
+                        "AvailabilityZoneId": "use1-az6",
+                        "GroupName": "",
+                        "Tenancy": "default",
+                        "AvailabilityZone": "us-east-1a"
+                    },
+                    "Monitoring": {
+                        "State": "disabled"
+                    },
+                    "SubnetId": "subnet-04cc25c5f1dc63df5",
+                    "VpcId": "vpc-055e559fe133bbe1e",
+                    "PrivateIpAddress": "172.31.33.144",
+                    "PublicIpAddress": "3.89.182.46"
+                }
+            ]
+        }
+    ]
+}

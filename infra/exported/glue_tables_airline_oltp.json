@@ -1,0 +1,700 @@
+{
+    "TableList": [
+        {
+            "Name": "airline_oltp_public_aircraft",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:19-05:00",
+            "UpdateTime": "2026-10-19T20:25:19-05:00",
+            "LastAccessTime": "2026-10-19T20:25:19-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "aircraft_id",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "model",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "capacity",
+                        "Type": "int"
+                    }
+                ],
+                "Location": "airline_oltp.public.aircraft",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        },
+        {
+            "Name": "airline_oltp_public_airports",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:20-05:00",
+            "UpdateTime": "2026-10-19T20:25:20-05:00",
+            "LastAccessTime": "2026-10-19T20:25:20-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "code",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "city",
+                        "Type": "string"
+                    }
+                ],
+                "Location": "airline_oltp.public.airports",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        },
+        {
+            "Name": "airline_oltp_public_fare_rules",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:20-05:00",
+            "UpdateTime": "2026-10-19T20:25:20-05:00",
+            "LastAccessTime": "2026-10-19T20:25:20-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "multiplier",
+                        "Type": "decimal(4,2)"
+                    },
+                    {
+                        "Name": "fare_class",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "min_days_before",
+                        "Type": "int"
+                    },
+                    {
+                        "Name": "fare_rule_id",
+                        "Type": "int"
+                    }
+                ],
+                "Location": "airline_oltp.public.fare_rules",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        },
+        {
+            "Name": "airline_oltp_public_flights",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:21-05:00",
+            "UpdateTime": "2026-10-19T20:25:21-05:00",
+            "LastAccessTime": "2026-10-19T20:25:21-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "aircraft_id",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "flight_date",
+                        "Type": "date"
+                    },
+                    {
+                        "Name": "flight_number",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "price_cents",
+                        "Type": "bigint"
+                    },
+                    {
+                        "Name": "route_code",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "seats_available",
+                        "Type": "int"
+                    },
+                    {
+                        "Name": "departure_time",
+                        "Type": "timestamp"
+                    },
+                    {
+                        "Name": "flight_id",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "capacity",
+                        "Type": "int"
+                    }
+                ],
+                "Location": "airline_oltp.public.flights",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        },
+        {
+            "Name": "airline_oltp_public_passengers",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:21-05:00",
+            "UpdateTime": "2026-10-19T20:25:21-05:00",
+            "LastAccessTime": "2026-10-19T20:25:21-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "full_name",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "passenger_id",
+                        "Type": "bigint"
+                    },
+                    {
+                        "Name": "document_id",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "email",
+                        "Type": "string"
+                    }
+                ],
+                "Location": "airline_oltp.public.passengers",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        },
+        {
+            "Name": "airline_oltp_public_payments",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:22-05:00",
+            "UpdateTime": "2026-10-19T20:25:22-05:00",
+            "LastAccessTime": "2026-10-19T20:25:22-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "reservation_id",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "updated_at",
+                        "Type": "timestamp"
+                    },
+                    {
+                        "Name": "amount_cents",
+                        "Type": "bigint"
+                    },
+                    {
+                        "Name": "provider",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "payment_id",
+                        "Type": "bigint"
+                    },
+                    {
+                        "Name": "created_at",
+                        "Type": "timestamp"
+                    },
+                    {
+                        "Name": "provider_ref",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "status",
+                        "Type": "string"
+                    }
+                ],
+                "Location": "airline_oltp.public.payments",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        },
+        {
+            "Name": "airline_oltp_public_reservation_segments",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:22-05:00",
+            "UpdateTime": "2026-10-19T20:25:22-05:00",
+            "LastAccessTime": "2026-10-19T20:25:22-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "reservation_id",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "segment_no",
+                        "Type": "smallint"
+                    },
+                    {
+                        "Name": "price_cents",
+                        "Type": "bigint"
+                    },
+                    {
+                        "Name": "flight_id",
+                        "Type": "string"
+                    }
+                ],
+                "Location": "airline_oltp.public.reservation_segments",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        },
+        {
+            "Name": "airline_oltp_public_reservations",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:23-05:00",
+            "UpdateTime": "2026-10-19T20:25:23-05:00",
+            "LastAccessTime": "2026-10-19T20:25:23-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "reservation_id",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "updated_at",
+                        "Type": "timestamp"
+                    },
+                    {
+                        "Name": "passenger_id",
+                        "Type": "bigint"
+                    },
+                    {
+                        "Name": "total_price_cents",
+                        "Type": "bigint"
+                    },
+                    {
+                        "Name": "created_at",
+                        "Type": "timestamp"
+                    },
+                    {
+                        "Name": "fare_rule_id",
+                        "Type": "int"
+                    },
+                    {
+                        "Name": "status",
+                        "Type": "string"
+                    }
+                ],
+                "Location": "airline_oltp.public.reservations",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        },
+        {
+            "Name": "airline_oltp_public_routes",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:24-05:00",
+            "UpdateTime": "2026-10-19T20:25:24-05:00",
+            "LastAccessTime": "2026-10-19T20:25:23-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "origin",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "destination",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "route_code",
+                        "Type": "string"
+                    }
+                ],
+                "Location": "airline_oltp.public.routes",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        },
+        {
+            "Name": "airline_oltp_public_scheduled_flights",
+            "DatabaseName": "airline_oltp",
+            "Owner": "owner",
+            "CreateTime": "2026-10-19T20:25:24-05:00",
+            "UpdateTime": "2026-10-19T20:25:24-05:00",
+            "LastAccessTime": "2026-10-19T20:25:24-05:00",
+            "Retention": 0,
+            "StorageDescriptor": {
+                "Columns": [
+                    {
+                        "Name": "days_of_week",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "aircraft_id",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "flight_number",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "route_code",
+                        "Type": "string"
+                    },
+                    {
+                        "Name": "departure_time",
+                        "Type": "timestamp"
+                    }
+                ],
+                "Location": "airline_oltp.public.scheduled_flights",
+                "Compressed": false,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "Parameters": {}
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {
+                    "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                    "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                    "CrawlerSchemaSerializerVersion": "1.0",
+                    "connectionName": "airline-oltp-conn",
+                    "compressionType": "none",
+                    "CrawlerSchemaDeserializerVersion": "1.0",
+                    "classification": "postgresql",
+                    "typeOfData": "table"
+                },
+                "StoredAsSubDirectories": false
+            },
+            "PartitionKeys": [],
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+                "UPDATED_BY_CRAWLER": "airline-oltp-crawler",
+                "CRAWL_RUN_ID": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+                "CrawlerSchemaSerializerVersion": "1.0",
+                "connectionName": "airline-oltp-conn",
+                "compressionType": "none",
+                "CrawlerSchemaDeserializerVersion": "1.0",
+                "classification": "postgresql",
+                "typeOfData": "table"
+            },
+            "CreatedBy": "arn:aws:sts::930581488240:assumed-role/LabRole/AWS-Crawler",
+            "IsRegisteredWithLakeFormation": false,
+            "CatalogId": "930581488240",
+            "VersionId": "0",
+            "IsMultiDialectView": false,
+            "IsMaterializedView": false
+        }
+    ]
+}

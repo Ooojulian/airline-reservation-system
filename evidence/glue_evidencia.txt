@@ -1,0 +1,47 @@
+== Glue evidencia 2026-10-20T01:34:04Z
+== get-tables airline_oltp
+airline_oltp_public_aircraft	None	3
+airline_oltp_public_airports	None	2
+airline_oltp_public_fare_rules	None	4
+airline_oltp_public_flights	None	9
+airline_oltp_public_passengers	None	4
+airline_oltp_public_payments	None	8
+airline_oltp_public_reservation_segments	None	4
+airline_oltp_public_reservations	None	7
+airline_oltp_public_routes	None	3
+airline_oltp_public_scheduled_flights	None	5
+== get-tables airline_olap
+airline_olap_public_fact_fare_month	None	7
+airline_olap_public_fact_route_month	None	9
+== job runs
+jr_ef5329df2c08752e665811a1b0b00740aab94d3b5598e1a280ae0e36396cf507	SUCCEEDED	2026-10-19T20:29:33.874000-05:00	2026-10-19T20:31:51.853000-05:00	110	220.0	G.1X	2
+== crawlers
+airline-olap-crawler	STOPPING	None	SUCCEEDED
+airline-oltp-crawler	READY	None	SUCCEEDED
+== OLAP (psql via SSM)
+ count 
+-------
+    63
+(1 row)
+ count 
+-------
+    23
+(1 row)
+ route_code |   month    | seats_capacity | seats_sold | occupancy | revenue_cents | bookings | cancellations |      etl_loaded_at      
+------------+------------+----------------+------------+-----------+---------------+----------+---------------+-------------------------
+ BOG-CLO    | 2026-06-01 |           4500 |       2957 |    0.6571 |  119236960000 |     2957 |           419 | 2026-10-20 01:30:39.832
+ BOG-CLO    | 2026-07-01 |           4650 |       3066 |    0.6594 |  124646370000 |     3066 |           424 | 2026-10-20 01:30:39.832
+ BOG-CLO    | 2026-08-01 |           4650 |       3018 |    0.6490 |  125350440000 |     3018 |           399 | 2026-10-20 01:30:39.832
+ BOG-CLO    | 2026-09-01 |           4500 |       2892 |    0.6427 |  121101560000 |     2892 |           390 | 2026-10-20 01:30:39.832
+ BOG-CLO    | 2026-10-01 |           4650 |       3031 |    0.6518 |  127399520000 |     3031 |           406 | 2026-10-20 01:30:39.832
+(5 rows)
+ fare_class |   month    | revenue_cents | bookings | cancellations | cancel_rate |      etl_loaded_at      
+------------+------------+---------------+----------+---------------+-------------+-------------------------
+ BUSINESS   | 2026-06-01 |  348053200000 |     3768 |           522 |      0.1217 | 2026-10-20 01:31:31.787
+ BUSINESS   | 2026-07-01 |  355011780000 |     3814 |           534 |      0.1228 | 2026-10-20 01:31:31.787
+ BUSINESS   | 2026-08-01 |  349940660000 |     3774 |           577 |      0.1326 | 2026-10-20 01:31:31.787
+ BUSINESS   | 2026-09-01 |  347263010000 |     3776 |           554 |      0.1279 | 2026-10-20 01:31:31.787
+ BUSINESS   | 2026-10-01 |  353890940000 |     3820 |           565 |      0.1288 | 2026-10-20 01:31:31.787
+(5 rows)
+	
+== status: Success

@@ -1,0 +1,10 @@
+.env
+*.env
+!.env.example
+*.dump
+__pycache__/
+*.pyc
+.venv/
+*.zip
+*.pem
+*credentials*

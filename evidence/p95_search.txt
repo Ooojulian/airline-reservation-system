@@ -1,0 +1,2 @@
+BASE_URL=http://localhost:8000 peticiones=100 concurrencia=20 codigos=[200]
+min=14ms media=44ms p50=41ms p95=83ms max=105ms objetivo<=1000ms -> OK

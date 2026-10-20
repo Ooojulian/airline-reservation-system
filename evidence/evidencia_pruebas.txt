@@ -1,0 +1,43 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.25, pytest-8.3.4, pluggy-1.6.0 -- /opt/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /opt/airline-system
+collecting ... collected 20 items
+
+tests/test_api.py::test_health PASSED
+tests/test_api.py::test_search PASSED
+tests/test_api.py::test_reserva_directa PASSED
+tests/test_api.py::test_reserva_con_escala PASSED
+tests/test_api.py::test_tramos_que_no_encadenan_422 PASSED
+tests/test_api.py::test_vuelo_inexistente_404 PASSED
+tests/test_api.py::test_consultar_reserva PASSED
+tests/test_api.py::test_cancelar_y_cancelar_dos_veces_409 PASSED
+tests/test_api.py::test_multitramo_todo_o_nada PASSED
+tests/test_api.py::test_flight_duplicado_409 PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[1-1] PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[1-2] PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[1-3] PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[1-4] PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[1-5] PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[5-1] PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[5-2] PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[5-3] PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[5-4] PASSED
+tests/test_api.py::test_concurrencia_sin_sobreventa[5-5] PASSED
+
+RESULTADOS DE CONCURRENCIA (50 solicitudes simultáneas por ronda)
+ronda capacity  201  409  5xx  otros  sillas_finales  resultado
+  1-1        1    1   49    0      0               0  OK
+  1-2        1    1   49    0      0               0  OK
+  1-3        1    1   49    0      0               0  OK
+  1-4        1    1   49    0      0               0  OK
+  1-5        1    1   49    0      0               0  OK
+  5-1        5    5   45    0      0               0  OK
+  5-2        5    5   45    0      0               0  OK
+  5-3        5    5   45    0      0               0  OK
+  5-4        5    5   45    0      0               0  OK
+  5-5        5    5   45    0      0               0  OK
+
+
+============================== 20 passed in 2.61s ==============================
+NOTA: segunda corrida contra IP publica omitida: el SG solo permite 8000 desde 181.32.203.201/32 (la EC2 no se alcanza a si misma por su IP publica).

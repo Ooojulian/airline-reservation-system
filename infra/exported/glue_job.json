@@ -1,0 +1,36 @@
+{
+    "Job": {
+        "Name": "airline-etl-oltp-to-olap",
+        "JobMode": "SCRIPT",
+        "JobRunQueuingEnabled": false,
+        "Role": "arn:aws:iam::930581488240:role/LabRole",
+        "CreatedOn": "2026-10-19T20:29:32.593000-05:00",
+        "LastModifiedOn": "2026-10-19T20:29:32.593000-05:00",
+        "ExecutionProperty": {
+            "MaxConcurrentRuns": 1
+        },
+        "Command": {
+            "Name": "glueetl",
+            "ScriptLocation": "s3://airline-system-930581488240/glue/etl_oltp_to_olap.py",
+            "PythonVersion": "3"
+        },
+        "DefaultArguments": {
+            "--TempDir": "s3://airline-system-930581488240/glue/tmp/",
+            "--job-language": "python",
+            "--enable-continuous-cloudwatch-log": "true"
+        },
+        "Connections": {
+            "Connections": [
+                "airline-oltp-conn",
+                "airline-olap-conn"
+            ]
+        },
+        "MaxRetries": 0,
+        "AllocatedCapacity": 2,
+        "Timeout": 15,
+        "MaxCapacity": 2.0,
+        "WorkerType": "G.1X",
+        "NumberOfWorkers": 2,
+        "GlueVersion": "4.0"
+    }
+}

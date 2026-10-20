@@ -1,0 +1,117 @@
+{
+    "DBInstances": [
+        {
+            "DBInstanceIdentifier": "airline-pg",
+            "DBInstanceClass": "db.t3.micro",
+            "Engine": "postgres",
+            "DBInstanceStatus": "backing-up",
+            "MasterUsername": "airline_admin",
+            "DBName": "postgres",
+            "Endpoint": {
+                "Address": "airline-pg.c4fvyi0hajiy.us-east-1.rds.amazonaws.com",
+                "Port": 5432,
+                "HostedZoneId": "Z2R2ITUGPM61AM"
+            },
+            "AllocatedStorage": 20,
+            "InstanceCreateTime": "2026-10-20T01:08:31.106000+00:00",
+            "PreferredBackupWindow": "09:31-10:01",
+            "BackupRetentionPeriod": 1,
+            "DBSecurityGroups": [],
+            "VpcSecurityGroups": [
+                {
+                    "VpcSecurityGroupId": "sg-02ee4ddb48ac84e4d",
+                    "Status": "active"
+                }
+            ],
+            "DBParameterGroups": [
+                {
+                    "DBParameterGroupName": "default.postgres16",
+                    "ParameterApplyStatus": "in-sync"
+                }
+            ],
+            "AvailabilityZone": "us-east-1a",
+            "DBSubnetGroup": {
+                "DBSubnetGroupName": "airline-db-subnets",
+                "DBSubnetGroupDescription": "Airline DB subnets",
+                "VpcId": "vpc-055e559fe133bbe1e",
+                "SubnetGroupStatus": "Complete",
+                "Subnets": [
+                    {
+                        "SubnetIdentifier": "subnet-019f193722650f8a8",
+                        "SubnetAvailabilityZone": {
+                            "Name": "us-east-1b"
+                        },
+                        "SubnetOutpost": {},
+                        "SubnetStatus": "Active"
+                    },
+                    {
+                        "SubnetIdentifier": "subnet-04cc25c5f1dc63df5",
+                        "SubnetAvailabilityZone": {
+                            "Name": "us-east-1a"
+                        },
+                        "SubnetOutpost": {},
+                        "SubnetStatus": "Active"
+                    },
+                    {
+                        "SubnetIdentifier": "subnet-09e5318c07ecfddce",
+                        "SubnetAvailabilityZone": {
+                            "Name": "us-east-1c"
+                        },
+                        "SubnetOutpost": {},
+                        "SubnetStatus": "Active"
+                    }
+                ]
+            },
+            "PreferredMaintenanceWindow": "fri:08:05-fri:08:35",
+            "UpgradeRolloutOrder": "second",
+            "PendingModifiedValues": {},
+            "LatestRestorableTime": "2026-10-20T01:28:44+00:00",
+            "MultiAZ": false,
+            "EngineVersion": "16.15",
+            "AutoMinorVersionUpgrade": true,
+            "ReadReplicaDBInstanceIdentifiers": [],
+            "LicenseModel": "postgresql-license",
+            "Iops": 3000,
+            "StorageThroughput": 125,
+            "OptionGroupMemberships": [
+                {
+                    "OptionGroupName": "default:postgres-16",
+                    "Status": "in-sync"
+                }
+            ],
+            "PubliclyAccessible": true,
+            "StorageType": "gp3",
+            "DbInstancePort": 0,
+            "StorageEncrypted": true,
+            "KmsKeyId": "arn:aws:kms:us-east-1:930581488240:key/f5f4bf60-a2c9-4569-a5bc-e4e13aad114b",
+            "DbiResourceId": "db-27QEUX72C34JSQZFG7K75XEBBU",
+            "CACertificateIdentifier": "rds-ca-rsa2048-g1",
+            "DomainMemberships": [],
+            "CopyTagsToSnapshot": false,
+            "MonitoringInterval": 0,
+            "DBInstanceArn": "arn:aws:rds:us-east-1:930581488240:db:airline-pg",
+            "IAMDatabaseAuthenticationEnabled": false,
+            "DatabaseInsightsMode": "standard",
+            "PerformanceInsightsEnabled": false,
+            "DeletionProtection": false,
+            "AssociatedRoles": [],
+            "TagList": [
+                {
+                    "Key": "Project",
+                    "Value": "airline-system"
+                }
+            ],
+            "CustomerOwnedIpEnabled": false,
+            "NetworkType": "IPV4",
+            "ActivityStreamStatus": "stopped",
+            "BackupTarget": "region",
+            "CertificateDetails": {
+                "CAIdentifier": "rds-ca-rsa2048-g1",
+                "ValidTill": "2027-10-20T01:07:12+00:00"
+            },
+            "DedicatedLogVolume": false,
+            "IsStorageConfigUpgradeAvailable": false,
+            "EngineLifecycleSupport": "open-source-rds-extended-support"
+        }
+    ]
+}

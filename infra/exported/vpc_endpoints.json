@@ -1,0 +1,34 @@
+{
+    "VpcEndpoints": [
+        {
+            "VpcEndpointId": "vpce-018e51171c329288c",
+            "VpcEndpointType": "Gateway",
+            "VpcId": "vpc-055e559fe133bbe1e",
+            "ServiceName": "com.amazonaws.us-east-1.s3",
+            "State": "available",
+            "PolicyDocument": "{\"Version\":\"2008-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"*\",\"Resource\":\"*\"}]}",
+            "RouteTableIds": [
+                "rtb-01090eb99684ed930"
+            ],
+            "SubnetIds": [],
+            "Groups": [],
+            "IpAddressType": "ipv4",
+            "DnsOptions": {
+                "DnsRecordIpType": "service-defined"
+            },
+            "PrivateDnsEnabled": false,
+            "RequesterManaged": false,
+            "NetworkInterfaceIds": [],
+            "DnsEntries": [],
+            "CreationTimestamp": "2026-10-20T00:57:17+00:00",
+            "Tags": [
+                {
+                    "Key": "Project",
+                    "Value": "airline-system"
+                }
+            ],
+            "OwnerId": "930581488240",
+            "ServiceRegion": "us-east-1"
+        }
+    ]
+}

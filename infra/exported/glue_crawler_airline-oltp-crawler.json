@@ -1,0 +1,51 @@
+{
+    "Crawler": {
+        "Name": "airline-oltp-crawler",
+        "Role": "LabRole",
+        "Targets": {
+            "S3Targets": [],
+            "JdbcTargets": [
+                {
+                    "ConnectionName": "airline-oltp-conn",
+                    "Path": "airline_oltp/public/%",
+                    "Exclusions": [],
+                    "EnableAdditionalMetadata": []
+                }
+            ],
+            "MongoDBTargets": [],
+            "DynamoDBTargets": [],
+            "CatalogTargets": [],
+            "DeltaTargets": [],
+            "IcebergTargets": [],
+            "HudiTargets": []
+        },
+        "DatabaseName": "airline_oltp",
+        "Classifiers": [],
+        "RecrawlPolicy": {
+            "RecrawlBehavior": "CRAWL_EVERYTHING"
+        },
+        "SchemaChangePolicy": {
+            "UpdateBehavior": "UPDATE_IN_DATABASE",
+            "DeleteBehavior": "DEPRECATE_IN_DATABASE"
+        },
+        "LineageConfiguration": {
+            "CrawlerLineageSettings": "DISABLE"
+        },
+        "State": "READY",
+        "CrawlElapsedTime": 0,
+        "CreationTime": "2026-10-19T20:23:33-05:00",
+        "LastUpdated": "2026-10-19T20:23:48-05:00",
+        "LastCrawl": {
+            "Status": "SUCCEEDED",
+            "LogGroup": "/aws-glue/crawlers",
+            "LogStream": "airline-oltp-crawler",
+            "MessagePrefix": "1a076b44-a405-4c9d-8bf7-bcd2a0af66d7",
+            "StartTime": "2026-10-19T20:23:37-05:00"
+        },
+        "Version": 2,
+        "LakeFormationConfiguration": {
+            "UseLakeFormationCredentials": false,
+            "AccountId": ""
+        }
+    }
+}

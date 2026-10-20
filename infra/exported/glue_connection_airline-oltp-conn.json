@@ -1,0 +1,21 @@
+{
+    "Connection": {
+        "Name": "airline-oltp-conn",
+        "ConnectionType": "JDBC",
+        "ConnectionProperties": {
+            "JDBC_ENFORCE_SSL": "false",
+            "JDBC_CONNECTION_URL": "jdbc:postgresql://airline-pg.c4fvyi0hajiy.us-east-1.rds.amazonaws.com:5432/airline_oltp",
+            "USERNAME": "airline_admin"
+        },
+        "PhysicalConnectionRequirements": {
+            "SubnetId": "subnet-04cc25c5f1dc63df5",
+            "SecurityGroupIdList": [
+                "sg-02ee4ddb48ac84e4d"
+            ],
+            "AvailabilityZone": "us-east-1a"
+        },
+        "CreationTime": "2026-10-19T20:23:23.765000-05:00",
+        "LastUpdatedTime": "2026-10-19T20:23:23.765000-05:00",
+        "ConnectionSchemaVersion": 1
+    }
+}

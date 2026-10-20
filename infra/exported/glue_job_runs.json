@@ -1,0 +1,25 @@
+{
+    "JobRuns": [
+        {
+            "Id": "jr_ef5329df2c08752e665811a1b0b00740aab94d3b5598e1a280ae0e36396cf507",
+            "Attempt": 0,
+            "JobName": "airline-etl-oltp-to-olap",
+            "JobMode": "SCRIPT",
+            "JobRunQueuingEnabled": false,
+            "StartedOn": "2026-10-19T20:29:33.874000-05:00",
+            "LastModifiedOn": "2026-10-19T20:31:51.853000-05:00",
+            "CompletedOn": "2026-10-19T20:31:51.853000-05:00",
+            "JobRunState": "SUCCEEDED",
+            "PredecessorRuns": [],
+            "AllocatedCapacity": 2,
+            "ExecutionTime": 110,
+            "Timeout": 15,
+            "MaxCapacity": 2.0,
+            "WorkerType": "G.1X",
+            "NumberOfWorkers": 2,
+            "LogGroupName": "/aws-glue/jobs",
+            "GlueVersion": "4.0",
+            "DPUSeconds": 220.0
+        }
+    ]
+}
