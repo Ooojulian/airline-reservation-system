@@ -16,11 +16,13 @@ from typing import Literal
 
 import psycopg
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from psycopg_pool import PoolTimeout
 from pydantic import BaseModel, Field, field_validator
 
 from . import db
+from .analytics import router as analytics_router
 
 
 @asynccontextmanager
@@ -31,6 +33,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Sistema de Reservas Aéreas", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"], allow_headers=["*"])
+app.include_router(analytics_router)
 
 CODE_ALPHABET = string.ascii_uppercase + string.digits
 ROUTE_RE = re.compile(r"^[A-Z]{3}-[A-Z]{3}$")

@@ -1,0 +1,46 @@
+VERIFICACION ANALYTICS (Athena, base airline_analytics, workgroup primary) vs ORACULO seed 2682
+Esperado: evidence/p2/oraculo_esperado.json (airline_data.oracle.load_truth(2682, 2000000))
+
+Resumen (esperado vs obtenido)
+- count(*) reservations_curated: esperado 2000542 | obtenido 2000542 | OK
+- Ingreso CONFIRMED 2023-01: esperado 2064557404 | obtenido 2064557404 | OK
+- Ingreso CONFIRMED 2024-01: esperado 2072070154 | obtenido 2072070154 | OK
+- Ingreso CONFIRMED 2024-12: esperado 1983343325 | obtenido 1983343325 | OK
+- Top-10 rutas por ocupacion (orden y valores identicos, error relativo 0): CUC-BAQ 0.87920813, CUC-BGA 0.85292289, PEI-MDE 0.82854063, MDE-LET 0.79864013, PEI-ADZ 0.77376036, MDE-CTG 0.74694030, ADZ-BOG 0.71939055, CUC-ADZ 0.69403400, PSO-BOG 0.66529436, CLO-MDE 0.64053483 | OK
+- Consulta de un mes (month='2024-01', indice 12): count esperado 83506 | obtenido 83506 | OK
+- Bytes escaneados consulta un mes (count, sum price_cents): 308482 B
+  Tamano total parquet reservations_curated: 19478722 B (24 archivos) -> promedio por particion 811613 B
+  Limite (2 x promedio) = 1623226 B -> 308482 <= 1623226 | OK (0.38 x promedio de particion; solo lee 1 columna de 1 particion)
+
+Salida cruda de las consultas (ver.sh)
+== VERIFICACION ANALYTICS vs ORACULO (seed 2682) ==
+mar 20 oct 2026 15:51:15 UTC
+SQL: SELECT count(*) FROM reservations_curated
+state=SUCCEEDED scanned_bytes=0
+2000542
+
+SQL: SELECT coalesce(sum(price_cents),0) FROM reservations_curated WHERE month='2023-01' AND status='CONFIRMED'
+state=SUCCEEDED scanned_bytes=318078
+2064557404
+
+SQL: SELECT coalesce(sum(price_cents),0) FROM reservations_curated WHERE month='2024-01' AND status='CONFIRMED'
+state=SUCCEEDED scanned_bytes=319134
+2072070154
+
+SQL: SELECT coalesce(sum(price_cents),0) FROM reservations_curated WHERE month='2024-12' AND status='CONFIRMED'
+state=SUCCEEDED scanned_bytes=309577
+1983343325
+
+SQL: SELECT route, CAST(sum(seats_sold) AS DOUBLE)/sum(seats_capacity) AS occ FROM route_month_metrics GROUP BY route ORDER BY occ DESC LIMIT 10
+state=SUCCEEDED scanned_bytes=1318
+CUC-BAQ	0.8792081260364842	CUC-BGA	0.8529228855721394	PEI-MDE	0.8285406301824212	MDE-LET	0.7986401326699835	PEI-ADZ	0.7737603648424544	MDE-CTG	0.7469402985074627	ADZ-BOG	0.7193905472636816	CUC-ADZ	0.6940339966832504	PSO-BOG	0.6652943615257048	CLO-MDE	0.6405348258706468
+
+SQL: SELECT count(*), sum(price_cents) FROM reservations_curated WHERE month='2024-01'
+state=SUCCEEDED scanned_bytes=308482
+83506	2258829199
+
+
+EMR
+- j-0600594649O6OD8KSHE (airline-curate-sample, emr-7.14.0): step COMPLETED, NormalizedInstanceHours=12
+- j-06661302ZS6EJJ3Z0HBI (airline-curate-full, emr-7.14.0): step COMPLETED, NormalizedInstanceHours=12
+- Total 24 horas normalizadas (limite 150). aws emr list-clusters --active: vacio.

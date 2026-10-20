@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel gerencial</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top"><strong>Reservas aéreas</strong><nav><a href="/">Cliente</a><a href="/manager" class="on">Panel gerencial</a></nav></header>
+<main>
+  <section class="card">
+    <h1>Ocupación por ruta y mes</h1>
+    <form id="manager-form" class="grid">
+      <label>Ruta (AAA-BBB)<input data-testid="manager-route" id="route" placeholder="BOG-MDE" autocomplete="off"></label>
+      <label>Mes (YYYY-MM)<input data-testid="manager-month" id="month" placeholder="2023-01" maxlength="7" autocomplete="off"></label>
+      <button type="submit" data-testid="manager-load" class="primary">Consultar</button>
+    </form>
+    <p id="manager-msg" class="msg" role="status"></p>
+    <div class="kpi">
+      <span class="kpi-label">Ocupación</span>
+      <span class="kpi-value" data-testid="occupancy-value" id="occupancy-value">--</span>
+      <span class="kpi-sub" id="occupancy-detail"></span>
+    </div>
+  </section>
+</main>
+<script src="app.js"></script>
+<script>initManager();</script>
+</body>
+</html>

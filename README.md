@@ -48,3 +48,10 @@ en orden ascendente de `flight_id`. Si algún tramo no tiene sillas se hace ROLL
 - Data Catalog: bases `airline_oltp` (10 tablas) y `airline_olap` (2 tablas) pobladas por los crawlers `airline-oltp-crawler` y `airline-olap-crawler` (JDBC `<db>/public/%`, LabRole, solo bajo demanda, sin schedule).
 - Job `airline-etl-oltp-to-olap` (Glue 4.0, 2 × G.1X, LabRole, timeout 15 min, 0 reintentos): script en `s3://airline-system-930581488240/glue/etl_oltp_to_olap.py`; trunca y recarga `fact_route_month` (63 filas) y `fact_fare_month` (23 filas). Corrida de referencia: ~110 s, 220 DPU-s.
 - Evidencias: `evidence/glue_evidencia.txt` (también en `s3://.../evidence/`).
+
+## Parcial 2: endpoint analítico y frontend
+- `GET /analytics/occupancy?route=AAA-BBB&month=YYYY-MM` (`backend/app/analytics.py`): consulta Athena (`airline_analytics.route_month_metrics`, workgroup `primary`, boto3 con el rol de la EC2) con `ExecutionParameters`; 422 si el formato es inválido, 404 sin datos, 503 si Athena falla (no afecta a las rutas que usan RDS). Caché en memoria (TTL 10 min) solo tras la primera consulta exitosa de cada (route, month). CORS permisivo (GET/POST).
+- Credenciales: el contenedor `airline-api` obtiene el rol vía IMDS; el hop limit de la instancia es 2 (verificado, `boto3` resuelve `iam-role` dentro del contenedor).
+- Frontend estático (`frontend/`, nginx:alpine, contenedor `airline-web`, puerto 3000, `--network host`): `/` cliente (buscar, reservar, confirmación) y `/manager` (ocupación). nginx hace proxy `/api/` -> `127.0.0.1:8000`. Despliegue: `bash /opt/airline-system/frontend/run_web.sh`. `infra/encender.sh` relanza API y web.
+- SG: puerto 3000 abierto a las IPs del equipo. Explicación: `docs/p2/EXPLICACION_ENDPOINT_FRONTEND.md`.
+- Playwright para el harness: venv `/opt/harnessvenv` con chromium en `/opt/pw-browsers` (usar `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`).

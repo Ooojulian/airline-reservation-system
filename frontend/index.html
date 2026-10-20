@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reservas aéreas</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top"><strong>Reservas aéreas</strong><nav><a href="/" class="on">Cliente</a><a href="/manager">Panel gerencial</a></nav></header>
+<main>
+  <section class="card">
+    <h1>Buscar vuelos</h1>
+    <form id="search-form" class="grid">
+      <label>Origen (IATA)<input data-testid="search-origin" id="origin" maxlength="3" placeholder="BOG" autocomplete="off"></label>
+      <label>Destino (IATA)<input data-testid="search-destination" id="destination" maxlength="3" placeholder="MDE" autocomplete="off"></label>
+      <label>Fecha<input data-testid="search-date" id="date" type="date"></label>
+      <button type="submit" data-testid="search-submit" class="primary">Buscar</button>
+    </form>
+    <p id="search-msg" class="msg" role="status"></p>
+    <div id="results"></div>
+  </section>
+
+  <section class="card" id="booking" hidden>
+    <h2>Reservar vuelo <span id="booking-flight"></span></h2>
+    <form id="booking-form" class="grid">
+      <label>Nombre del pasajero<input data-testid="passenger-name" id="passenger" maxlength="200" autocomplete="off"></label>
+      <label>Tarifa
+        <select id="fare"><option value="ECONOMY" selected>Económica</option><option value="BUSINESS">Business</option></select>
+      </label>
+      <button type="submit" data-testid="confirm-submit" class="primary">Confirmar reserva</button>
+    </form>
+    <p id="booking-msg" class="msg" role="status"></p>
+    <div id="confirmation" hidden>
+      <p>Reserva confirmada. Código de confirmación:</p>
+      <p class="code" data-testid="confirmation-id" id="confirmation-id"></p>
+    </div>
+  </section>
+</main>
+<script src="app.js"></script>
+<script>initClient();</script>
+</body>
+</html>

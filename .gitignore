@@ -8,3 +8,10 @@ __pycache__/
 *.zip
 *.pem
 *credentials*
+*.csv
+*.parquet
+raw/
+raw-sample/
+.env.*
+!.env.example
+*.tgz

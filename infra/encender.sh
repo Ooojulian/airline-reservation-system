@@ -14,8 +14,9 @@ for i in $(seq 1 60); do
   [ "$(aws ssm describe-instance-information --filters Key=InstanceIds,Values=$ID --query 'InstanceInformationList[0].PingStatus' --output text)" = Online ] && break; sleep 10
 done
 CID=$(aws ssm send-command --instance-ids $ID --document-name AWS-RunShellScript \
-  --parameters 'commands=["bash /opt/airline-system/backend/run_api.sh"]' --query Command.CommandId --output text)
+  --parameters 'commands=["bash /opt/airline-system/backend/run_api.sh","bash /opt/airline-system/frontend/run_web.sh"]' --query Command.CommandId --output text)
 aws ssm wait command-executed --command-id $CID --instance-id $ID 2>/dev/null
-aws ssm get-command-invocation --command-id $CID --instance-id $ID --query 'StandardOutputContent' --output text | tail -3
+aws ssm get-command-invocation --command-id $CID --instance-id $ID --query 'StandardOutputContent' --output text | tail -5
 IP=$(aws ec2 describe-instances --instance-ids $ID --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
 echo "API: http://$IP:8000  (health: http://$IP:8000/health)"
+echo "Web: http://$IP:3000  (panel: http://$IP:3000/manager)"
