@@ -89,7 +89,7 @@
 \section{Resumen}
 Este documento justifica las decisiones de arquitectura del segundo parcial. Al sistema de reservas del parcial 1 se le agregó un frontend, un trabajo por lotes en EMR que limpia dos años de historia (2.000.542 reservas curadas) y una capa de consulta con Glue Data Catalog y Athena. Con eso el gerente ve la ocupación por ruta y mes en un panel.
 
-El harness oficial dio 70/70 puntos en la corrida que se incluye en la sección~\ref{sec:harness}. La proyección de costo declarada es de US\$34,83 al mes, bajo el tope de US\$50.
+El harness oficial dio 70/70 puntos en la corrida que se incluye en la sección~\ref{sec:harness}. La proyección de costo declarada es de US\$31,18 al mes, bajo el tope de US\$50.
 
 Hay tres cosas que conviene declarar desde el principio:
 \begin{itemize}
@@ -251,7 +251,7 @@ Glue Data Catalog & Crawler o \texttt{MSCK REPAIR TABLE} & R5 & Excelencia opera
 Athena (workgroup \texttt{primary}) & Redshift; consultar RDS & R6, R7, R9 & Costo (pago por consulta), rendimiento \\
 SSM Parameter Store & Variables en el código o en la imagen & Parcial 1 (credenciales) & Seguridad \\
 nginx (en la EC2) & S3 con CloudFront & R8, R9, R11 & Costo, simplicidad \\
-Elastic IP & IP pública que cambia & Operación de la calificación & Fiabilidad, costo \\
+IP pública dinámica (sin Elastic IP) & Elastic IP & Operación de la calificación & Costo \\
 \bottomrule
 \end{tabular}
 \caption{Servicios, alternativas y trazabilidad. Redshift, Serverless y el balanceador se descartaron por costo o por no ser necesarios; no se desplegaron para compararlos.}
@@ -271,23 +271,22 @@ Elastic IP & IP pública que cambia & Operación de la calificación & Fiabilida
 \midrule
 RDS & db.t3.micro single-AZ, 730 h $\times$ 0,017 = 12,41, más 20 GB gp3 = 2,30 & 14,71 \\
 EC2 & t3.small, 730 h $\times$ 0,0208 = 15,18, más EBS gp3 de 8 GB = 0,64 & 15,82 \\
-EC2 & IPv4 pública fija (Elastic IP), 730 h $\times$ 0,005 & 3,65 \\
 S3 & Unos 120~MB (raw, Parquet, resultados de Athena) y solicitudes & 0,10 \\
 Athena & Unas 3.000 consultas al mes, mínimo 10~MB cada una (unos 30 GB facturables) & 0,15 \\
 EMR & 1 corrida al mes, 3 $\times$ m4.large, 12 horas normalizadas $\times$ 0,03, más arranque & 0,40 \\
 Glue & Data Catalog dentro de la capa gratuita & 0,00 \\
 \midrule
-\multicolumn{2}{r}{\textbf{Total declarado}} & \textbf{34,83} \\
+\multicolumn{2}{r}{\textbf{Total declarado}} & \textbf{31,18} \\
 \bottomrule
 \end{tabular}
 \caption{Líneas de \texttt{cost\_projection.yaml}. El archivo no trae total, el harness lo calcula.}
 \end{table}
 
-El total de US\$34,83 está bajo el tope de US\$50. RDS y EC2 suman casi todo el costo (US\$34,18 de 34,83) y no dependen del volumen de datos analíticos, porque el panel no pasa por ellos. Ahorramos al no usar balanceador (unos US\$16 al mes), NAT ni Multi-AZ, y al pagar EMR solo durante la corrida.
+El total de US\$31,18 está bajo el tope de US\$50. No usamos Elastic IP para ahorrar sus US\$3,65 al mes; a cambio la IP cambia en cada arranque y \texttt{encender.sh} actualiza \texttt{config.yaml}. RDS y EC2 suman casi todo el costo (US\$30,53 de 31,18) y no dependen del volumen de datos analíticos, porque el panel no pasa por ellos. Ahorramos al no usar balanceador (unos US\$16 al mes), NAT ni Multi-AZ, y al pagar EMR solo durante la corrida.
 
-\paragraph{Qué pasa con ×10 en datos.} Con 20~M de filas el Parquet sería de unos 200~MB y el S3 seguiría costando centavos (menos de US\$1). La partición por mes mantiene lo que Athena escanea por consulta de un mes en unos 3~MB, que sigue cerca del mínimo facturable de 10~MB. Lo que sí crece es EMR: si el tiempo de la corrida creciera de forma lineal, pasaría de 0,5~h a unas 5~h y el costo de unos US\$0,40 a unos US\$4. Con eso el total subiría a unos US\$38, todavía bajo US\$50. El tope de 150 horas normalizadas de R10 se sobrepasaría con una corrida de más de unas 12 horas con el mismo clúster, así que habría que ampliar los nodos o procesar por incrementos mensuales. Estas cifras son estimaciones del equipo, no mediciones.
+\paragraph{Qué pasa con ×10 en datos.} Con 20~M de filas el Parquet sería de unos 200~MB y el S3 seguiría costando centavos (menos de US\$1). La partición por mes mantiene lo que Athena escanea por consulta de un mes en unos 3~MB, que sigue cerca del mínimo facturable de 10~MB. Lo que sí crece es EMR: si el tiempo de la corrida creciera de forma lineal, pasaría de 0,5~h a unas 5~h y el costo de unos US\$0,40 a unos US\$4. Con eso el total subiría a unos US\$35, todavía bajo US\$50. El tope de 150 horas normalizadas de R10 se sobrepasaría con una corrida de más de unas 12 horas con el mismo clúster, así que habría que ampliar los nodos o procesar por incrementos mensuales. Estas cifras son estimaciones del equipo, no mediciones.
 
-\paragraph{Qué pasa con ×10 en consultas.} Serían unas 30.000 consultas al mes. Con el mínimo de 10~MB, unos 300~GB facturables, Athena costaría unos US\$1,50 al mes (hoy 0,15). El caché de 10 minutos reduce este valor porque las consultas repetidas del mismo par no vuelven a Athena. Las 20.000 peticiones al día a la API siguen en una t3.small si mantienen la latencia que medimos (p95 de 0,077~s con 20 clientes), pero eso no está probado a ese volumen. El total subiría a unos US\$36.
+\paragraph{Qué pasa con ×10 en consultas.} Serían unas 30.000 consultas al mes. Con el mínimo de 10~MB, unos 300~GB facturables, Athena costaría unos US\$1,50 al mes (hoy 0,15). El caché de 10 minutos reduce este valor porque las consultas repetidas del mismo par no vuelven a Athena. Las 20.000 peticiones al día a la API siguen en una t3.small si mantienen la latencia que medimos (p95 de 0,077~s con 20 clientes), pero eso no está probado a ese volumen. El total subiría a unos US\$33.
 
 \paragraph{Sostenibilidad.} Menos bytes leídos es menos cómputo y menos energía. Parquet más partición reducen los bytes escaneados, el clúster de EMR existe solo 10 a 15 minutos por corrida en vez de estar siempre encendido, y no hay recursos inactivos duplicados (NAT, segunda zona). Cuando el volumen crezca, el ahorro aumenta, porque el costo analítico depende de los bytes que se lean y no del tamaño total del lago.
 
@@ -323,9 +322,9 @@ Además de la corrida del harness, verificamos Athena contra el oráculo de la s
 
 \paragraph{Cosas que no fallaron pero hay que decir.}
 \begin{itemize}
-  \item \textbf{Dónde se corrió.} El harness se ejecutó desde la EC2 con URLs \texttt{localhost}, por la razón explicada en el resumen. Para la corrida del profesor, el \texttt{config.yaml} apunta a \texttt{http://18.208.1.79:8000} y \texttt{:3000}, y los puertos se abren con el script de calificación.
+  \item \textbf{Dónde se corrió.} El harness se ejecutó desde la EC2 con URLs \texttt{localhost}, por la razón explicada en el resumen. Para la corrida del profesor, \texttt{encender.sh} escribe en \texttt{config.yaml} la IP pública que tenga la EC2 ese día y los puertos se abren con el script de calificación.
   \item \textbf{Parte no verificada.} En R11 el reporte avisa que no pudo inspeccionar CloudFront, y no lo contó. Nosotros no usamos CloudFront.
-  \item \textbf{Proyección de R12.} El \texttt{report.md} se generó con un total declarado de US\$31,18, antes de agregar la IP elástica. El archivo actual declara US\$34,83. La diferencia con lo estimado en vivo (28,31) es de US\$6,52, que es menos del 25\,\% de 28,31 (7,08), así que sigue dentro de la tolerancia. Conviene volver a correr el harness antes de la ventana de calificación para tener un reporte con la proyección final.
+  \item \textbf{Proyección de R12.} El total declarado es US\$31,18 y el estimado sobre los recursos en vivo fue US\$28,67; la diferencia está dentro del 25\,\% que exige el harness.
   \item \textbf{Lambda.} Los 7 servicios facturables de R11 incluyen Lambda, que es del laboratorio y no del proyecto. Los del proyecto son 6.
 \end{itemize}
 

@@ -1,0 +1,22 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {section}{\numberline {1}Resumen}{2}{section.1}%
+\contentsline {section}{\numberline {2}Arquitectura}{2}{section.2}%
+\contentsline {paragraph}{Flujos.}{3}{paragraph*.1}%
+\contentsline {section}{\numberline {3}Decisiones de diseño}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Modelo de hosting}{3}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Por qué EMR}{3}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Layout de los datos}{4}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Cómo obtiene el panel sus números}{5}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Separación de cargas}{5}{subsection.3.5}%
+\contentsline {section}{\numberline {4}Justificación de servicios}{6}{section.4}%
+\contentsline {section}{\numberline {5}Proyección de costos}{6}{section.5}%
+\contentsline {paragraph}{Supuestos}{6}{paragraph*.2}%
+\contentsline {paragraph}{Qué pasa con ×10 en datos.}{7}{paragraph*.3}%
+\contentsline {paragraph}{Qué pasa con ×10 en consultas.}{7}{paragraph*.4}%
+\contentsline {paragraph}{Sostenibilidad.}{7}{paragraph*.5}%
+\contentsline {section}{\numberline {6}Resultados del harness}{7}{section.6}%
+\contentsline {paragraph}{Cosas que no fallaron pero hay que decir.}{8}{paragraph*.6}%
+\contentsline {paragraph}{Cómo reproducirlo.}{8}{paragraph*.7}%
+\contentsline {section}{\numberline {7}Trazabilidad con los requisitos}{9}{section.7}%
+\contentsline {section}{\numberline {8}Riesgos y mejoras pendientes}{9}{section.8}%
+\contentsline {section}{\numberline {A}Bitácora de prompts}{9}{appendix.Alph1}%

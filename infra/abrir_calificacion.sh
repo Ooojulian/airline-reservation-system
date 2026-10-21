@@ -7,4 +7,5 @@ for p in 8000 3000; do
   aws ec2 authorize-security-group-ingress --group-id $SG --protocol tcp --port $p --cidr 0.0.0.0/0 >/dev/null 2>&1 \
     && echo "puerto $p abierto a 0.0.0.0/0" || echo "puerto $p ya estaba abierto"
 done
-echo "URLs: http://18.208.1.79:8000  http://18.208.1.79:3000"
+IP=$(aws ec2 describe-instances --filters Name=tag:Name,Values=airline-api Name=instance-state-name,Values=running --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+echo "URLs: http://$IP:8000  http://$IP:3000"

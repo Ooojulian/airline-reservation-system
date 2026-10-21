@@ -18,5 +18,7 @@ CID=$(aws ssm send-command --instance-ids $ID --document-name AWS-RunShellScript
 aws ssm wait command-executed --command-id $CID --instance-id $ID 2>/dev/null
 aws ssm get-command-invocation --command-id $CID --instance-id $ID --query 'StandardOutputContent' --output text | tail -5
 IP=$(aws ec2 describe-instances --instance-ids $ID --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+# Sin Elastic IP la IP cambia en cada arranque: actualizar config.yaml del harness
+sed -i -E "s#http://[0-9.]+:(8000|3000)#http://$IP:\1#g" "$(dirname "$0")/../config.yaml" && echo "config.yaml actualizado con $IP"
 echo "API: http://$IP:8000  (health: http://$IP:8000/health)"
 echo "Web: http://$IP:3000  (panel: http://$IP:3000/manager)"
