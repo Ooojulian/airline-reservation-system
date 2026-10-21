@@ -1,0 +1,23 @@
+Simulacion de la corrida del profesor con sondas distintas
+Fecha: 2026-10-21
+Seed: 2682 (igual). Se cambia probe_salt en una copia del harness (/tmp/harness-salt, ya borrada).
+Salts probados: 82682, 1234, 777. Pruebas: tests/test_analytics.py y tests/test_frontend.py (12 tests por salt).
+
+Resultado por salt: 12/12 PASSED en los tres (R4, R5, R6, R7, R8, R9 completos: 40/40 de lo evaluado).
+
+Sondas R7 (par ruta/mes: latencia, limite 10 s, 5 sondas por salt):
+Salt 82682: CLO-MDE 2024-08 0.92s | PEI-ADZ 2024-02 1.32s | MDE-CTG 2024-09 1.32s | PSO-BOG 2024-12 1.31s | PSO-BOG 2023-05 1.28s
+Salt 1234:  MDE-LET 2024-05 0.85s | ADZ-BOG 2024-01 1.25s | CUC-BGA 2023-07 1.29s | CUC-BGA 2024-11 1.24s | PSO-BOG 2024-11 1.26s
+Salt 777:   CUC-BGA 2024-05 1.35s | CLO-MDE 2024-02 1.25s | CUC-ADZ 2024-03 1.23s | MDE-LET 2023-09 1.25s | CUC-ADZ 2023-02 1.28s
+
+Sonda R9 (ocupacion: panel / endpoint / verdad):
+Salt 82682: CUC-BAQ 2024-03  0.9323 / 0.9323 / 0.9323
+Salt 1234:  PEI-ADZ 2024-10  0.7183 / 0.7183 / 0.7183
+Salt 777:   CUC-BGA 2024-07  0.8517 / 0.8517 / 0.8517
+
+Latencia maxima observada: 1.35 s. En todos los casos 8 consultas Athena registradas durante las sondas.
+
+Limpieza: la EC2 queda sin /tmp/harness-salt; /opt/harness no se toco.
+R8 creo 1 vuelo de prueba por salt; se ejecuto infra/limpiar_vuelos_prueba.sql en RDS (airline_oltp):
+borrados 3 vuelos, 3 reservas, 3 pasajeros (y 1 ruta huerfana). Estado final: 1448 vuelos, 150197 reservas,
+8 rutas, 0 vuelos inconsistentes. No se re-ejecuto Glue.
