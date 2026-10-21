@@ -42,8 +42,8 @@ Fuente de verdad para los agentes del parcial 2. El harness oficial está en
 - `route_month_metrics` (Parquet, sin partición): route, month, seats_capacity(bigint = suma capacity de vuelos de la
   ruta en el mes), seats_sold(bigint, CONFIRMED), occupancy(double = seats_sold/seats_capacity), revenue_cents(bigint,
   CONFIRMED), bookings(bigint), cancellations(bigint).
-  DECISIÓN: bookings = CONFIRMED + CANCELLED (igual al oráculo; el contrato textual dice solo CONFIRMED, contradicción
-  que se declara en el documento; ningún test la revisa).
+  DECISIÓN: bookings = CONFIRMED (según el contrato DATA.md; el oráculo oracle.py cuenta CONFIRMED + CANCELLED y por eso
+  difiere, pero ningún test revisa ese campo; se declara en el documento).
 
 ## EMR
 - Clúster EMR 7.x (release más reciente disponible), 1 master + 2 core **m4.large** (único tipo permitido),

@@ -25,10 +25,10 @@ decimal, y los ids no deben quedar como `123.0`.
   partición `month`. `repartition("month")` antes de escribir evita miles de archivos pequeños: queda 1 archivo por mes.
 - **route_month_metrics**: `seats_capacity` = suma de `capacity` de los vuelos de la ruta en el mes (se calcula desde
   vuelos, no desde reservas, para contar vuelos sin ventas); `seats_sold` = CONFIRMED; `revenue_cents` = suma de
-  price de CONFIRMED; `occupancy = seats_sold/seats_capacity` (double); `bookings` = CONFIRMED + CANCELLED
-  (igual que el oráculo); `cancellations` = CANCELLED. `coalesce(1)` -> un solo archivo (tabla pequeña, 9 KB).
+  price de CONFIRMED; `occupancy = seats_sold/seats_capacity` (double); `bookings` = CONFIRMED
+  (según el contrato DATA.md); `cancellations` = CANCELLED. `coalesce(1)` -> un solo archivo (tabla pequeña, 9 KB).
 - Declaración honesta: el contrato textual (DATA.md) dice `bookings` = solo CONFIRMED, pero `oracle.py` usa
-  CONFIRMED + CANCELLED. Seguimos al oráculo; ningún test revisa `bookings`.
+  CONFIRMED + CANCELLED. Seguimos al contrato escrito; ningún test revisa `bookings`.
 
 Resultado: 2.000.542 filas curadas, 24 particiones, idéntico al oráculo.
 
@@ -76,8 +76,8 @@ un run COMPLETED (R4 compara LastModified con la ventana del run).
   Verificado: 2.000.542 filas = oráculo.
 - **¿Por qué la capacidad sale de vuelos y no de reservas?** Un vuelo sin ventas igual aporta asientos; calcularla desde
   reservas subestimaría la capacidad y sobrestimaría la ocupación.
-- **¿Por qué `bookings` incluye canceladas?** Así lo calcula el oráculo (CONFIRMED + CANCELLED); el texto del contrato dice
-  otra cosa; lo declaramos.
+- **¿Por qué `bookings` solo cuenta confirmadas?** Así lo dice el contrato escrito (DATA.md); el oráculo cuenta también
+  las canceladas, pero ningún test lo revisa; lo declaramos.
 - **¿Por qué `repartition("month")`?** Sin eso cada tarea escribe un archivo por mes (muchos archivos pequeños); con
   eso queda 1 archivo por partición.
 - **¿Por qué projection y no `MSCK REPAIR`/crawler?** Es determinista, sin costo de crawler ni mantenimiento y Athena

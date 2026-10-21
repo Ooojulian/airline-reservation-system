@@ -67,7 +67,7 @@ def main():
     det = detail.groupBy("route", "month").agg(
         F.sum(F.when(F.col("status") == "CONFIRMED", 1).otherwise(0)).alias("seats_sold"),
         F.sum(F.when(F.col("status") == "CONFIRMED", F.col("price_cents")).otherwise(0)).alias("revenue_cents"),
-        F.count(F.lit(1)).alias("bookings"),  # CONFIRMED + CANCELLED, igual que el oráculo
+        F.sum(F.when(F.col("status") == "CONFIRMED", 1).otherwise(0)).alias("bookings"),  # bookings = CONFIRMED, según contrato DATA.md
         F.sum(F.when(F.col("status") == "CANCELLED", 1).otherwise(0)).alias("cancellations"),
     )
     m = cap.join(det, on=["route", "month"], how="left").na.fill(0)

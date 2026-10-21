@@ -4,26 +4,53 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Panel gerencial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;700;900&family=Red+Hat+Text:wght@400;500;700&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%2712%27 fill=%27%23c8102e%27/%3E%3Cpath transform=%27rotate(45 12 12)%27 fill=%27%23fff%27 d=%27M19 14.8v-1.5l-6-3.8V5.2a1.1 1.1 0 0 0-2.2 0v4.3l-6 3.8v1.5l6-1.9v4l-1.5 1.1v1.1l2.6-.8 2.6.8v-1.1L13 16.9v-4z%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header class="top"><strong>Reservas aéreas</strong><nav><a href="/">Cliente</a><a href="/manager" class="on">Panel gerencial</a></nav></header>
+<header class="top">
+  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>Reservas aéreas</a>
+  <nav><a href="/">Reservar</a><a href="/manager" aria-current="page">Panel gerencial</a></nav>
+</header>
+
+<section class="hero hero-short">
+  <div class="hero-inner">
+    <h1>¿Qué tan llenos van los aviones?</h1>
+    <p>Ocupación de una ruta en un mes: sillas vendidas (reservas confirmadas) sobre la capacidad de todos sus vuelos. Datos del histórico procesado en EMR y consultado en Athena.</p>
+  </div>
+</section>
+
 <main>
-  <section class="card">
-    <h1>Ocupación por ruta y mes</h1>
-    <form id="manager-form" class="grid">
-      <label>Ruta (AAA-BBB)<input data-testid="manager-route" id="route" placeholder="BOG-MDE" autocomplete="off"></label>
-      <label>Mes (YYYY-MM)<input data-testid="manager-month" id="month" placeholder="2023-01" maxlength="7" autocomplete="off"></label>
-      <button type="submit" data-testid="manager-load" class="primary">Consultar</button>
-    </form>
-    <p id="manager-msg" class="msg" role="status"></p>
-    <div class="kpi">
-      <span class="kpi-label">Ocupación</span>
-      <span class="kpi-value" data-testid="occupancy-value" id="occupancy-value">--</span>
-      <span class="kpi-sub" id="occupancy-detail"></span>
+  <form id="manager-form" class="search-card mgr-form" novalidate>
+    <label class="field">Ruta<input data-testid="manager-route" id="route" placeholder="BOG-MDE" maxlength="7" autocomplete="off" spellcheck="false"></label>
+    <label class="field">Mes<input data-testid="manager-month" id="month" placeholder="2024-03" maxlength="7" autocomplete="off" inputmode="numeric"></label>
+    <button type="submit" data-testid="manager-load" class="btn-red">Ver ocupación</button>
+  </form>
+  <p id="manager-msg" class="msg" role="status"></p>
+
+  <section class="cabin" aria-labelledby="occ-title">
+    <div class="readout">
+      <h2 id="occ-title" class="readout-title"><span id="occ-route">Ruta</span> <span id="occ-month" class="readout-month">mes</span></h2>
+      <p class="readout-value" data-testid="occupancy-value" id="occupancy-value">--</p>
+      <p class="readout-sub" id="occupancy-detail">Consulte una ruta y un mes para ver cuántas sillas se vendieron.</p>
+      <p class="readout-note" id="seat-scale" hidden>Cada silla del plano representa el 1 % de la capacidad del mes.</p>
     </div>
+    <figure class="seatmap-wrap">
+      <div class="seatmap" id="seatmap" role="img" aria-label="Plano de cabina sin datos"></div>
+      <figcaption><span class="key key-sold"></span>Vendida <span class="key key-free"></span>Libre</figcaption>
+    </figure>
+  </section>
+
+  <section class="year" id="year" hidden aria-labelledby="year-title">
+    <h2 id="year-title" class="year-title">La misma ruta en <span id="year-label"></span></h2>
+    <p class="year-help">Toque un mes para verlo en detalle.</p>
+    <ol class="year-bars" id="year-bars"></ol>
   </section>
 </main>
+<footer class="foot">Proyecto académico de Big Data, Universidad Sergio Arboleda.</footer>
 <script src="app.js"></script>
 <script>initManager();</script>
 </body>

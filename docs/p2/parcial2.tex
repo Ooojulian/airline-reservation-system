@@ -93,7 +93,7 @@ El harness oficial dio 70/70 puntos en la corrida que se incluye en la sección~
 
 Hay tres cosas que conviene declarar desde el principio:
 \begin{itemize}
-  \item \textbf{Campo \texttt{bookings}.} El contrato textual dice que \texttt{bookings} cuenta solo reservas CONFIRMED, pero el oráculo del harness (\texttt{oracle.py}) cuenta CONFIRMED más CANCELLED. Seguimos al oráculo. Ningún test revisa ese campo.
+  \item \textbf{Campo \texttt{bookings}.} El contrato textual dice que \texttt{bookings} cuenta solo reservas CONFIRMED, pero el oráculo del harness (\texttt{oracle.py}) cuenta CONFIRMED más CANCELLED. Seguimos al contrato escrito. Ningún test revisa ese campo.
   \item \textbf{Servicio Lambda en R11.} El harness detectó 7 servicios facturables: Athena, EC2, EMR, Glue, Lambda, RDS y S3. Las funciones Lambda (RedshiftOverwatch, MainMonitoringFunction, ModLabRole, RoleCreationFunction, RedshiftEventSubscription) pertenecen al propio Learner Lab. Nosotros no creamos ninguna.
   \item \textbf{Lugar donde se corrió el harness.} Se corrió desde la propia EC2 con URLs \texttt{localhost}, porque la EC2 no alcanza su propia IP pública (el grupo de seguridad solo permite IPs del equipo). El \texttt{config.yaml} entregado usa la IP pública fija.
 \end{itemize}
@@ -386,7 +386,7 @@ Usamos Claude Code como orquestador, que a su vez delegó tareas en agentes (inf
 2 & Usar la semilla 2682 y delegar el trabajo en agentes Sonnet. & Se generaron los datos con esa semilla y el trabajo se repartió: EMR y Athena, endpoint y frontend, documento. \\
 3 & No dar nada por bueno sin compararlo con el oráculo. & Se escribió \texttt{verificacion\_analytics.txt}; conteos, ingresos y top 10 coinciden exactamente. \\
 4 & Probar EMR primero con una muestra del 5\,\% para cuidar el presupuesto. & Primera corrida sobre \texttt{raw-sample/}; solo después la corrida completa. Total de 24 horas normalizadas. \\
-5 & Decidir qué hacer con \texttt{bookings}, porque el contrato y el oráculo se contradicen. & Se siguió al oráculo (CONFIRMED más CANCELLED) y se declaró aquí. \\
+5 & Decidir qué hacer con \texttt{bookings}, porque el contrato y el oráculo se contradicen. & Se siguió al contrato escrito (solo CONFIRMED) y se declaró aquí. \\
 6 & No abrir puertos a internet salvo en la ventana de calificación, porque \texttt{/admin/flights} no tiene autenticación. & Scripts \texttt{abrir\_calificacion.sh} y \texttt{cerrar\_calificacion.sh}; la base nunca se abre. \\
 7 & Redactar este documento corto y directo, por la retroalimentación del parcial 1. & Documento de menos de 20 páginas con cada decisión ligada a un requisito. \\
 8 & [Completar] & [Completar] \\

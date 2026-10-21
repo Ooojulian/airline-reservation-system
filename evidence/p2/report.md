@@ -19,7 +19,7 @@ Automated score: **70.0 / 70.0**
 
 ## R1 Flight search latency - passed
 - passed: `test_search_p95` 
-- evidence: 100 requests, concurrency 20: p50=0.032s p95=0.077s
+- evidence: 100 requests, concurrency 20: p50=0.032s p95=0.075s
 
 ## R2 No overselling under concurrency - passed
 - passed: `test_last_seat_exactly_one` 
@@ -43,7 +43,7 @@ Automated score: **70.0 / 70.0**
 - passed: `test_emr_run_completed` 
 - passed: `test_parquet_written_by_emr` 
 - passed: `test_cleaning_row_count_and_revenue` 
-- evidence: 2 COMPLETED EMR step/job runs found
+- evidence: 3 COMPLETED EMR step/job runs found
 - evidence: 24/24 parquet files were written inside a COMPLETED EMR run window
 - evidence: curated rows: expected 2000542, got 2000542
 
@@ -62,16 +62,16 @@ Automated score: **70.0 / 70.0**
 ## R7 Analytics endpoint backed by Athena - passed
 - passed: `test_endpoint_matches_oracle_and_uses_athena` 
 - passed: `test_endpoint_unknown_is_404` 
-- evidence: MDE-CTG 2023-01: ok in 1.41s
-- evidence: CUC-BGA 2024-08: ok in 1.29s
-- evidence: MDE-CTG 2024-07: ok in 0.80s
-- evidence: PEI-MDE 2024-04: ok in 1.29s
+- evidence: MDE-CTG 2023-01: ok in 1.34s
+- evidence: CUC-BGA 2024-08: ok in 1.33s
+- evidence: MDE-CTG 2024-07: ok in 1.29s
+- evidence: PEI-MDE 2024-04: ok in 0.88s
 - evidence: CUC-BGA 2024-04: ok in 1.31s
-- evidence: 8 Athena queries submitted during the probes
+- evidence: 7 Athena queries submitted during the probes
 
 ## R8 Customer flow in browser - passed
 - passed: `test_search_reserve_confirm` 
-- evidence: UI created reservation IC9K32 for a flight; backend returns it
+- evidence: UI created reservation W9RTZU for a flight; backend returns it
 
 ## R9 Manager panel matches endpoint - passed
 - passed: `test_manager_panel_equals_endpoint` 
@@ -81,7 +81,7 @@ Automated score: **70.0 / 70.0**
 - passed: `test_no_running_emr` 
 - passed: `test_emr_hours_cap` 
 - evidence: active clusters=[] started serverless apps=0
-- evidence: normalized instance hours used: 24.0 (cap 150)
+- evidence: normalized instance hours used: 36.0 (cap 150)
 
 ## R11 Simple low-cost architecture - passed
 - passed: `test_instance_classes` 
@@ -92,5 +92,5 @@ Automated score: **70.0 / 70.0**
 ## R12 Cost projection - passed
 - passed: `test_projection_file` 
 - passed: `test_projection_consistent_with_live` 
-- evidence: declared total 31.18 USD/month; limit 50.00 (min of 1.5x reference 60.0 and budget 50.0)
-- evidence: cost estimated from live resources: 28.31 {'RDS': 12.41, 'EC2': 15.18, 'EMR': 0.72, 'Athena': 0.0, 'S3': 0.0}
+- evidence: declared total 34.83 USD/month; limit 50.00 (min of 1.5x reference 60.0 and budget 50.0)
+- evidence: cost estimated from live resources: 28.67 {'RDS': 12.41, 'EC2': 15.18, 'EMR': 1.08, 'Athena': 0.0, 'S3': 0.0}

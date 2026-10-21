@@ -3,7 +3,7 @@
     "team_id": "cristancho-urrego",
     "seed": 2682
   },
-  "generated_at": "2026-10-20 15:59:53",
+  "generated_at": "2026-10-21 17:30:36",
   "points": 70.0,
   "max_points": 70.0,
   "requirements": [
@@ -21,7 +21,7 @@
         }
       ],
       "evidence": [
-        "100 requests, concurrency 20: p50=0.032s p95=0.077s"
+        "100 requests, concurrency 20: p50=0.032s p95=0.075s"
       ],
       "warnings": []
     },
@@ -102,7 +102,7 @@
         }
       ],
       "evidence": [
-        "2 COMPLETED EMR step/job runs found",
+        "3 COMPLETED EMR step/job runs found",
         "24/24 parquet files were written inside a COMPLETED EMR run window",
         "curated rows: expected 2000542, got 2000542"
       ],
@@ -179,12 +179,12 @@
         }
       ],
       "evidence": [
-        "MDE-CTG 2023-01: ok in 1.41s",
-        "CUC-BGA 2024-08: ok in 1.29s",
-        "MDE-CTG 2024-07: ok in 0.80s",
-        "PEI-MDE 2024-04: ok in 1.29s",
+        "MDE-CTG 2023-01: ok in 1.34s",
+        "CUC-BGA 2024-08: ok in 1.33s",
+        "MDE-CTG 2024-07: ok in 1.29s",
+        "PEI-MDE 2024-04: ok in 0.88s",
         "CUC-BGA 2024-04: ok in 1.31s",
-        "8 Athena queries submitted during the probes"
+        "7 Athena queries submitted during the probes"
       ],
       "warnings": []
     },
@@ -202,7 +202,7 @@
         }
       ],
       "evidence": [
-        "UI created reservation IC9K32 for a flight; backend returns it"
+        "UI created reservation W9RTZU for a flight; backend returns it"
       ],
       "warnings": []
     },
@@ -244,7 +244,7 @@
       ],
       "evidence": [
         "active clusters=[] started serverless apps=0",
-        "normalized instance hours used: 24.0 (cap 150)"
+        "normalized instance hours used: 36.0 (cap 150)"
       ],
       "warnings": []
     },
@@ -292,8 +292,8 @@
         }
       ],
       "evidence": [
-        "declared total 31.18 USD/month; limit 50.00 (min of 1.5x reference 60.0 and budget 50.0)",
-        "cost estimated from live resources: 28.31 {'RDS': 12.41, 'EC2': 15.18, 'EMR': 0.72, 'Athena': 0.0, 'S3': 0.0}"
+        "declared total 34.83 USD/month; limit 50.00 (min of 1.5x reference 60.0 and budget 50.0)",
+        "cost estimated from live resources: 28.67 {'RDS': 12.41, 'EC2': 15.18, 'EMR': 1.08, 'Athena': 0.0, 'S3': 0.0}"
       ],
       "warnings": []
     }
