@@ -18,7 +18,7 @@
 \contentsline {section}{\numberline {6}Resultados del harness}{7}{section.6}%
 \contentsline {paragraph}{Pruebas con otras sondas.}{8}{paragraph*.7}%
 \contentsline {paragraph}{Cosas que no fallaron pero hay que decir.}{8}{paragraph*.8}%
-\contentsline {paragraph}{Cómo reproducirlo.}{8}{paragraph*.9}%
+\contentsline {paragraph}{Cómo reproducirlo.}{9}{paragraph*.9}%
 \contentsline {section}{\numberline {7}Trazabilidad con los requisitos}{9}{section.7}%
 \contentsline {section}{\numberline {8}Riesgos y mejoras pendientes}{9}{section.8}%
 \contentsline {section}{\numberline {A}Bitácora de prompts}{9}{appendix.Alph1}%
