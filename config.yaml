@@ -4,9 +4,9 @@ team_id: "cristancho-urrego"
 seed: 2682               # the seed assigned to your team (changes your dataset AND the expected answers)
 
 backend:
-  base_url: "http://35.171.88.52:8000"
+  base_url: "http://98.83.234.42:8000"
 frontend:
-  base_url: "http://35.171.88.52:3000"
+  base_url: "http://98.83.234.42:3000"
 
 aws:
   region: us-east-1
