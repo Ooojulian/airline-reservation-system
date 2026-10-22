@@ -11,14 +11,14 @@
 \contentsline {subsection}{\numberline {3.5}Separación de cargas}{6}{subsection.3.5}%
 \contentsline {section}{\numberline {4}Justificación de servicios}{6}{section.4}%
 \contentsline {section}{\numberline {5}Proyección de costos}{6}{section.5}%
-\contentsline {paragraph}{Supuestos}{6}{paragraph*.3}%
+\contentsline {paragraph}{Supuestos}{7}{paragraph*.3}%
 \contentsline {paragraph}{Qué pasa con ×10 en datos.}{7}{paragraph*.4}%
 \contentsline {paragraph}{Qué pasa con ×10 en consultas.}{7}{paragraph*.5}%
 \contentsline {paragraph}{Sostenibilidad.}{7}{paragraph*.6}%
-\contentsline {section}{\numberline {6}Resultados del harness}{7}{section.6}%
+\contentsline {section}{\numberline {6}Resultados del harness}{8}{section.6}%
 \contentsline {paragraph}{Pruebas con otras sondas.}{8}{paragraph*.7}%
 \contentsline {paragraph}{Cosas que no fallaron pero hay que decir.}{8}{paragraph*.8}%
 \contentsline {paragraph}{Cómo reproducirlo.}{9}{paragraph*.9}%
 \contentsline {section}{\numberline {7}Trazabilidad con los requisitos}{9}{section.7}%
 \contentsline {section}{\numberline {8}Riesgos y mejoras pendientes}{9}{section.8}%
-\contentsline {section}{\numberline {A}Bitácora de prompts}{9}{appendix.Alph1}%
+\contentsline {section}{\numberline {A}Bitácora de prompts}{10}{appendix.Alph1}%
