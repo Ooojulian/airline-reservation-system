@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.9.10)  21 OCT 2026 12:45
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.9.10)  21 OCT 2026 20:20
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -955,11 +955,11 @@ Package rerunfilecheck Info: File `parcial2.out' has not changed.
 (rerunfilecheck)             Checksum: 0FF380B0266DBA7AB0BC592DB0D53CD4;2221.
  ) 
 Here is how much of TeX's memory you used:
- 26701 strings out of 476120
- 485858 string characters out of 5793657
- 2020975 words of memory out of 5000000
+ 26706 strings out of 476120
+ 485912 string characters out of 5793657
+ 2025975 words of memory out of 5000000
  48054 multiletter control sequences out of 15000+600000
- 639387 words of font info for 167 fonts, out of 8000000 for 9000
+ 639564 words of font info for 169 fonts, out of 8000000 for 9000
  40 hyphenation exceptions out of 8191
  88i,13n,92p,1005b,1066s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/ty
@@ -973,10 +973,10 @@ pfb></usr/share/texmf/fonts/type1/public/lm/lmri9.pfb></usr/share/texmf/fonts/t
 ype1/public/lm/lmsy9.pfb></usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></u
 sr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/p
 ublic/lm/lmtt8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt9.pfb>
-Output written on parcial2.pdf (11 pages, 467229 bytes).
+Output written on parcial2.pdf (11 pages, 469803 bytes).
 PDF statistics:
- 258 PDF objects out of 1000 (max. 8388607)
- 206 compressed objects within 3 object streams
- 47 named destinations out of 1000 (max. 500000)
+ 259 PDF objects out of 1000 (max. 8388607)
+ 207 compressed objects within 3 object streams
+ 48 named destinations out of 1000 (max. 500000)
  49789 words of extra memory for PDF output out of 51595 (max. 10000000)
 
