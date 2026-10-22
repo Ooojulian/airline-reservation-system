@@ -1,5 +1,5 @@
 assumptions: >-
-  Proyeccion mensual (730 h, us-east-1, on-demand, precios de pricing.yaml donde existen). Despliegue 24/7 (la EC2 se proyecta como instancia reservada de 1 ano, porque corre todo el tiempo; en el Learner Lab corre bajo demanda):
+  Proyeccion mensual (730 h, us-east-1, on-demand, precios de pricing.yaml donde existen). Despliegue 24/7:
   1 RDS PostgreSQL db.t3.micro single-AZ y 1 EC2 t3.small con API (:8000) y frontend (:3000). Carga: ~50
   usuarios (clientes y gerentes), ~2.000 requests/dia a la API, ~50 consultas/dia al panel gerencial.
   Datos: ~100 MB crudos CSV (2.000.000 reservas, seed 2682), ~20 MB Parquet curado; 1 corrida EMR al mes
@@ -8,7 +8,7 @@ assumptions: >-
   sin balanceador, sin Multi-AZ. Glue Data Catalog dentro de la capa gratuita (<1M objetos).
 line_items:
   - {service: "RDS", detail: "db.t3.micro single-AZ 730 h x 0.017 = 12.41 + 20 GB gp3 x 0.115 = 2.30", monthly_usd: 14.71}
-  - {service: "EC2", detail: "t3.small reservada 1 ano sin pago inicial 730 h x 0.013 = 9.49 + EBS gp3 8 GB = 0.64 (API + frontend nginx)", monthly_usd: 10.13}
+  - {service: "EC2", detail: "t3.small 730 h x 0.0208 = 15.18 + EBS gp3 8 GB = 0.64 (API + frontend nginx)", monthly_usd: 15.82}
   - {service: "S3", detail: "~120 MB (raw 100 MB + parquet 20 MB + logs/resultados Athena) y requests", monthly_usd: 0.10}
   - {service: "Athena", detail: "~3.000 consultas/mes sobre route_month_metrics (<1 MB cada una, minimo 10 MB) = ~30 GB-equiv. 0.15 USD", monthly_usd: 0.15}
   - {service: "EMR", detail: "1 corrida/mes, 3 x m4.large, 0.5 h = 6 h-instancia = 12 horas normalizadas x 0.03 + overhead arranque", monthly_usd: 0.40}
