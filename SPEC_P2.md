@@ -1,7 +1,7 @@
 # SPEC P2 — Panel gerencial (Parcial 2 Big Data)
 
 Fuente de verdad para los agentes del parcial 2. El harness oficial está en
-`/home/julian/Descargas/parcial2-harness-estudiantes (3)/parcial2-harness/` (NO editar `harness/`, `tests/`,
+`/home/julian/Descargas/Universidad/Big_Data/Parcial_2/harness/parcial2-harness/` (NO editar `harness/`, `tests/`,
 `thresholds.yaml`). Contratos en su carpeta `contract/`. Leer también `airline_data/oracle.py`.
 
 ## Reglas generales

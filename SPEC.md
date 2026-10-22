@@ -1,6 +1,6 @@
 # SPEC — Sistema de Reservas Aéreas (Parcial Big Data, USA)
 
-> ACTUALIZACIÓN (compatibilidad con parcial 2, harness en ~/Descargas/parcial2-harness-estudiantes (3)):
+> ACTUALIZACIÓN (compatibilidad con parcial 2, harness en ~/Descargas/Universidad/Big_Data/Parcial_2/harness):
 > - DB = RDS PostgreSQL 16 `airline-pg` db.t3.micro single-AZ (Aurora prohibido por R11).
 > - flights.flight_id TEXT (lo da el cliente). 12 aeropuertos: BOG MDE CLO CTG BAQ SMR BGA PEI CUC ADZ LET PSO.
 > - POST /admin/flights {flight_id, route, flight_date, capacity, price_cents} → 201 / 409; crea ruta si no existe.
