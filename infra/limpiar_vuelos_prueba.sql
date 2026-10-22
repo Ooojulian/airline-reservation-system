@@ -28,6 +28,8 @@ BEGIN
   END IF;
 END $$;
 
+DELETE FROM seat_holds          WHERE reservation_id IN (SELECT reservation_id FROM test_reservations) OR flight_id IN (SELECT flight_id FROM test_flights);
+DELETE FROM seat_assignments     WHERE reservation_id IN (SELECT reservation_id FROM test_reservations) OR flight_id IN (SELECT flight_id FROM test_flights);
 DELETE FROM payments             WHERE reservation_id IN (SELECT reservation_id FROM test_reservations);
 DELETE FROM reservation_segments WHERE reservation_id IN (SELECT reservation_id FROM test_reservations);
 DELETE FROM reservations         WHERE reservation_id IN (SELECT reservation_id FROM test_reservations);

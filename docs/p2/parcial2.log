@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.9.10)  21 OCT 2026 20:20
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.9.10)  21 OCT 2026 22:22
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -866,45 +866,50 @@ Package hyperref Info: Link coloring ON on input line 44.
 \@outlinefile=\write4
 \openout4 = `parcial2.out'.
 
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 5
-0.
- (/usr/share/texmf/tex/latex/lm/ot1lmr.fd
-File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 5
-0.
-
-(/usr/share/texmf/tex/latex/lm/omllmm.fd
-File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-50.
-
-(/usr/share/texmf/tex/latex/lm/omslmsy.fd
-File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-50.
-
-(/usr/share/texmf/tex/latex/lm/omxlmex.fd
-File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 50.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 50.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 50.
+<Logo.png, id=63, 315.3381pt x 72.27pt>
+File: Logo.png Graphic file (type png)
+<use Logo.png>
+Package pdftex.def Info: Logo.png  used on input line 50.
+(pdftex.def)             Requested size: 210.20235pt x 48.17583pt.
 Package microtype Info: Character `029' is missing
 (microtype)             in font `T1/lmr/m/sc/14.4'.
 (microtype)             Ignoring protrusion settings for this character.
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/
-dvips/lm/lm-ec.enc}]
+dvips/lm/lm-ec.enc} <./Logo.png>]
 (./parcial2.toc
 LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 6
+.
+ (/usr/share/texmf/tex/latex/lm/ot1lmr.fd
+File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 6
+.
+
+(/usr/share/texmf/tex/latex/lm/omllmm.fd
+File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
+6.
+
+(/usr/share/texmf/tex/latex/lm/omslmsy.fd
+File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
+6.
+
+(/usr/share/texmf/tex/latex/lm/omxlmex.fd
+File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10.95> on input line 6.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <8> on input line 6.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <6> on input line 6.
 )
 \tf@toc=\write5
 \openout5 = `parcial2.toc'.
@@ -927,18 +932,18 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `lmtt' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
- [2]
+ [2] [3]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <9> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 167.
- [3]
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <9> on input line 208.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 208.
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 169.
  [4]
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <9> on input line 210.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 210.
+
 [5] [6]
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 2
-87.
+89.
  (/usr/share/texmf/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [7{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/share/texmf/fonts/
@@ -955,13 +960,13 @@ Package rerunfilecheck Info: File `parcial2.out' has not changed.
 (rerunfilecheck)             Checksum: 0FF380B0266DBA7AB0BC592DB0D53CD4;2221.
  ) 
 Here is how much of TeX's memory you used:
- 26706 strings out of 476120
- 485912 string characters out of 5793657
- 2025975 words of memory out of 5000000
- 48054 multiletter control sequences out of 15000+600000
- 639564 words of font info for 169 fonts, out of 8000000 for 9000
+ 26714 strings out of 476120
+ 485999 string characters out of 5793657
+ 2026975 words of memory out of 5000000
+ 48055 multiletter control sequences out of 15000+600000
+ 636934 words of font info for 171 fonts, out of 8000000 for 9000
  40 hyphenation exceptions out of 8191
- 88i,13n,92p,1005b,1066s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 88i,13n,92p,1045b,1066s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/ty
 pe1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx9.pfb></us
 r/share/texmf/fonts/type1/public/lm/lmbxi10.pfb></usr/share/texmf/fonts/type1/p
@@ -973,10 +978,10 @@ pfb></usr/share/texmf/fonts/type1/public/lm/lmri9.pfb></usr/share/texmf/fonts/t
 ype1/public/lm/lmsy9.pfb></usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></u
 sr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/p
 ublic/lm/lmtt8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt9.pfb>
-Output written on parcial2.pdf (11 pages, 469803 bytes).
+Output written on parcial2.pdf (11 pages, 496009 bytes).
 PDF statistics:
- 259 PDF objects out of 1000 (max. 8388607)
- 207 compressed objects within 3 object streams
- 48 named destinations out of 1000 (max. 500000)
- 49789 words of extra memory for PDF output out of 51595 (max. 10000000)
+ 264 PDF objects out of 1000 (max. 8388607)
+ 210 compressed objects within 3 object streams
+ 49 named destinations out of 1000 (max. 500000)
+ 47746 words of extra memory for PDF output out of 51595 (max. 10000000)
 

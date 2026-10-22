@@ -6,28 +6,36 @@
 <title>Reservas aéreas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;700;900&family=Red+Hat+Text:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%2712%27 fill=%27%23c8102e%27/%3E%3Cpath transform=%27rotate(45 12 12)%27 fill=%27%23fff%27 d=%27M19 14.8v-1.5l-6-3.8V5.2a1.1 1.1 0 0 0-2.2 0v4.3l-6 3.8v1.5l6-1.9v4l-1.5 1.1v1.1l2.6-.8 2.6.8v-1.1L13 16.9v-4z%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="top">
-  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>Reservas aéreas</a>
-  <nav><a href="/" aria-current="page">Reservar</a><a href="/manager">Panel gerencial</a></nav>
+  <div class="top-in">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span><span>Reservas <b>aéreas</b></span></a>
+    <nav aria-label="Secciones"><a href="/" aria-current="page">Reservar</a><a href="/checkin">Check-in</a><a href="/manager">Panel gerencial</a></nav>
+  </div>
 </header>
 
 <section class="hero">
-  <svg class="hero-arc" viewBox="0 0 1200 260" preserveAspectRatio="none" aria-hidden="true">
-    <path class="arc-line" d="M-20 240 C 300 20, 820 0, 1220 150"/>
+  <svg class="hero-art" viewBox="0 0 1440 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <circle class="sun" cx="1130" cy="118" r="62"/>
+    <path class="trail" d="M140 236 C 430 110, 780 60, 1060 128"/>
+    <path class="ridge r1" d="M0 250 L110 196 L210 232 L330 158 L450 220 L560 172 L690 236 L820 148 L940 214 L1060 174 L1190 230 L1310 182 L1440 226 V360 H0Z"/>
+    <path class="ridge r2" d="M0 296 L150 246 L270 284 L410 228 L540 288 L670 244 L800 298 L940 248 L1080 294 L1210 254 L1340 290 L1440 262 V360 H0Z"/>
+    <path class="ridge r3" d="M0 334 L180 298 L330 328 L500 294 L660 332 L820 302 L990 334 L1150 304 L1300 332 L1440 310 V360 H0Z"/>
   </svg>
   <div class="hero-inner">
     <h1>¿A dónde vuela hoy?</h1>
-    <p>Busque su vuelo, elija silla libre y reciba su código al instante.</p>
+    <p>Vuelos nacionales e internacionales. Reserve en un minuto y haga su check-in desde 24 horas antes.</p>
   </div>
 </section>
 
 <main>
   <form id="search-form" class="search-card" novalidate>
+    <div class="tabs" role="presentation"><span class="tab on">Reservar vuelo</span><a class="tab" href="/checkin">Check-in</a></div>
+    <div class="search-row">
     <div class="route">
       <label class="iata">
         <span class="iata-label">Desde</span>
@@ -45,7 +53,14 @@
       <label class="field">Fecha de ida<input data-testid="search-date" id="date" type="date"></label>
       <button type="submit" data-testid="search-submit" class="btn-red">Buscar vuelos</button>
     </div>
+    </div>
   </form>
+
+  <section class="routes" id="routes" hidden aria-labelledby="routes-title">
+    <h2 id="routes-title" class="routes-title">Rutas con vuelos</h2>
+    <p class="routes-help">Toque un destino para llenar la búsqueda. Los destinos en rojo son internacionales.</p>
+    <div id="routes-list"></div>
+  </section>
 
   <p id="search-msg" class="msg" role="status"></p>
 
@@ -59,9 +74,13 @@
     <h3 id="booking-title">Datos del pasajero, vuelo <span id="booking-flight"></span></h3>
     <form id="booking-form" class="ticket-form">
       <label class="field grow">Nombre completo<input data-testid="passenger-name" id="passenger" maxlength="200" autocomplete="name"></label>
-      <label class="field">Tarifa
-        <select id="fare"><option value="ECONOMY" selected>Económica</option><option value="BUSINESS">Business (+80 %)</option></select>
-      </label>
+      <fieldset class="fares" id="fares"><legend>Tarifa <small>(precio estimado, el total lo calcula el servidor)</small></legend><div class="fare-list" id="fare-list"></div></fieldset>
+      <div class="seatpick" id="seatpick" hidden>
+        <p class="seatpick-head"><strong>Elegir silla ahora</strong> <span class="muted">Es opcional, también puede hacerlo en el check-in.</span></p>
+        <div id="seatpick-map"></div>
+        <p class="msg" id="seatpick-msg" role="status"></p>
+        <button type="button" class="btn-ghost-dark" id="seatpick-clear" hidden>Quitar silla elegida</button>
+      </div>
       <button type="submit" data-testid="confirm-submit" class="btn-red">Confirmar reserva</button>
     </form>
     <p id="booking-msg" class="msg" role="status"></p>
@@ -75,6 +94,8 @@
         <div><dt>Pasajero</dt><dd id="pass-name"></dd></div>
         <div><dt>Vuelo</dt><dd id="pass-flight"></dd></div>
         <div><dt>Fecha</dt><dd id="pass-date"></dd></div>
+        <div><dt>Clase</dt><dd id="pass-fare"></dd></div>
+        <div class="wide"><dt>Silla</dt><dd id="pass-seat"></dd></div>
       </dl>
     </div>
     <div class="pass-stub">

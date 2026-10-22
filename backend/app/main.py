@@ -23,6 +23,8 @@ from pydantic import BaseModel, Field, field_validator
 
 from . import db
 from .analytics import router as analytics_router
+from .checkin import (MSG_CHECKIN_SEAT, assign_seat, canonical_fare, load_reservation, release_seats,
+                      router as checkin_router, validate_seat)
 
 
 @asynccontextmanager
@@ -35,6 +37,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Sistema de Reservas Aéreas", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"], allow_headers=["*"])
 app.include_router(analytics_router)
+app.include_router(checkin_router)
 
 CODE_ALPHABET = string.ascii_uppercase + string.digits
 ROUTE_RE = re.compile(r"^[A-Z]{3}-[A-Z]{3}$")
@@ -44,7 +47,8 @@ ROUTE_RE = re.compile(r"^[A-Z]{3}-[A-Z]{3}$")
 class ReservationIn(BaseModel):
     flight_id: str = Field(min_length=1, max_length=64)
     passenger_name: str = Field(min_length=1, max_length=200)
-    fare_class: Literal["ECONOMY", "BUSINESS"]
+    fare_class: Literal["XS", "S", "M", "L", "PR", "ECONOMY", "BUSINESS"]  # ECONOMY=M, BUSINESS=PR
+    seat: str | None = Field(default=None, max_length=4)  # solo L/PR
     connection_flight_ids: list[str] = Field(default_factory=list, max_length=3)  # máx. 4 tramos
     document_id: str | None = Field(default=None, max_length=50)
     email: str | None = Field(default=None, max_length=200)
@@ -83,52 +87,6 @@ def segment_price(price_cents: int, multiplier: Decimal) -> int:
     return int((Decimal(price_cents) * multiplier).quantize(Decimal(1), rounding=ROUND_HALF_UP))
 
 
-def load_reservation(cur, reservation_id: str) -> dict | None:
-    """Arma la respuesta completa de una reserva (usa el cursor de la transacción actual)."""
-    cur.execute(
-        """SELECT r.reservation_id, r.status, r.total_price_cents, r.created_at, r.updated_at,
-                  fr.fare_class, fr.multiplier,
-                  p.full_name, p.document_id, p.email
-           FROM reservations r
-           JOIN passengers p ON p.passenger_id = r.passenger_id
-           JOIN fare_rules fr ON fr.fare_rule_id = r.fare_rule_id
-           WHERE r.reservation_id = %s""",
-        (reservation_id,),
-    )
-    r = cur.fetchone()
-    if r is None:
-        return None
-    cur.execute(
-        """SELECT s.segment_no, s.flight_id, f.flight_number, f.route_code AS route, rt.origin, rt.destination,
-                  f.flight_date, f.departure_time, s.price_cents
-           FROM reservation_segments s
-           JOIN flights f ON f.flight_id = s.flight_id
-           JOIN routes rt ON rt.route_code = f.route_code
-           WHERE s.reservation_id = %s ORDER BY s.segment_no""",
-        (reservation_id,),
-    )
-    segments = cur.fetchall()
-    cur.execute(
-        "SELECT payment_id, amount_cents, provider, provider_ref, status FROM payments WHERE reservation_id = %s",
-        (reservation_id,),
-    )
-    return {
-        "reservation_id": r["reservation_id"],
-        "flight_id": segments[0]["flight_id"] if segments else None,  # primer tramo
-        "status": r["status"],
-        "passenger_name": r["full_name"],
-        "document_id": r["document_id"],
-        "email": r["email"],
-        "fare_class": r["fare_class"],
-        "multiplier": r["multiplier"],
-        "total_price_cents": r["total_price_cents"],
-        "segments": segments,
-        "payment": cur.fetchone(),
-        "created_at": r["created_at"],
-        "updated_at": r["updated_at"],
-    }
-
-
 # ----------------------------- Endpoints -----------------------------
 @app.get("/health")
 def health():
@@ -138,6 +96,22 @@ def health():
         return {"status": "ok", "db": "ok"}
     except Exception:
         return JSONResponse(status_code=503, content={"status": "error", "db": "error"})
+
+
+@app.get("/routes")
+def list_routes():
+    """Rutas con al menos un vuelo programado desde hoy (sin vuelos de prueba)."""
+    with db.pool.connection() as conn:
+        return conn.execute(
+            """SELECT rt.route_code, rt.origin, ao.city AS origin_city, rt.destination, ad.city AS destination_city,
+                      rt.route_type
+               FROM routes rt
+               JOIN airports ao ON ao.code = rt.origin
+               JOIN airports ad ON ad.code = rt.destination
+               WHERE EXISTS (SELECT 1 FROM flights f WHERE f.route_code = rt.route_code
+                             AND f.flight_date >= (now() AT TIME ZONE 'America/Bogota')::date AND f.flight_number IS NOT NULL)
+               ORDER BY rt.origin, rt.destination"""
+        ).fetchall()
 
 
 @app.get("/flights/search")
@@ -152,7 +126,7 @@ def search_flights(
     with db.pool.connection() as conn:
         cur = conn.execute(
             """SELECT f.flight_id, f.route_code AS route, f.flight_date, f.seats_available, f.price_cents,
-                      f.flight_number, f.departure_time, f.capacity
+                      f.flight_number, f.departure_time, f.capacity, rt.route_type
                FROM flights f JOIN routes rt ON rt.route_code = f.route_code
                WHERE rt.origin = %s AND rt.destination = %s AND f.flight_date = %s
                  AND f.seats_available > 0
@@ -181,13 +155,16 @@ def _create_reservation(body: ReservationIn) -> dict:
     ids = [body.flight_id, *body.connection_flight_ids]
     if len(set(ids)) != len(ids):
         raise HTTPException(422, "tramos repetidos")
+    fare = canonical_fare(body.fare_class)
+    if body.seat and fare in ("XS", "S", "M"):
+        raise HTTPException(422, MSG_CHECKIN_SEAT)
 
     # Una sola transacción; cualquier HTTPException hace ROLLBACK al salir del contexto.
     with db.pool.connection() as conn:
         cur = conn.cursor()
         cur.execute(
-            """SELECT f.flight_id, f.flight_date, f.price_cents, rt.origin, rt.destination,
-                      CURRENT_DATE AS today
+            """SELECT f.flight_id, f.flight_date, f.price_cents, f.capacity, rt.origin, rt.destination,
+                      (now() AT TIME ZONE 'America/Bogota')::date AS today
                FROM flights f JOIN routes rt ON rt.route_code = f.route_code
                WHERE f.flight_id = ANY(%s)""",
             (ids,),
@@ -209,18 +186,20 @@ def _create_reservation(body: ReservationIn) -> dict:
         # Tarifa: mayor min_days_before <= días que faltan para el primer tramo
         days_before = (seq[0]["flight_date"] - seq[0]["today"]).days
         cur.execute(
-            """SELECT fare_rule_id, multiplier FROM fare_rules
+            """SELECT fare_rule_id, multiplier, cabin FROM fare_rules
                WHERE fare_class = %s AND min_days_before <= %s
                ORDER BY min_days_before DESC LIMIT 1""",
-            (body.fare_class, days_before),
+            (fare, days_before),
         )
         rule = cur.fetchone()
+
+        seat = validate_seat(seq[0]["capacity"], rule["cabin"], body.seat) if body.seat else None
 
         # Descuento de sillas: orden ascendente de flight_id (evita deadlocks), todo-o-nada
         for fid in sorted(ids):
             cur.execute(
                 """UPDATE flights SET seats_available = seats_available - 1
-                   WHERE flight_id = %s AND seats_available > 0 AND flight_date >= CURRENT_DATE
+                   WHERE flight_id = %s AND seats_available > 0 AND flight_date >= (now() AT TIME ZONE 'America/Bogota')::date
                    RETURNING flight_id""",
                 (fid,),
             )
@@ -261,6 +240,8 @@ def _create_reservation(body: ReservationIn) -> dict:
             "INSERT INTO payments (reservation_id, amount_cents, provider_ref, status) VALUES (%s,%s,%s,'APPROVED')",
             (code, total, f"SIM-{code}"),
         )
+        if seat:  # misma transacción: si la silla está tomada (409) se revierte toda la reserva
+            assign_seat(cur, code, ids[0], seat)
         return load_reservation(cur, code)
 
 
@@ -310,6 +291,7 @@ def cancel_reservation(reservation_id: str):
                 "UPDATE flights SET seats_available = seats_available + 1 WHERE flight_id = %s",
                 (row["flight_id"],),
             )
+        release_seats(cur, rid)
         cur.execute(
             "UPDATE payments SET status = 'REFUNDED', updated_at = now() WHERE reservation_id = %s",
             (rid,),
@@ -327,8 +309,11 @@ def create_flight(body: FlightIn):
             for code in (origin, destination):
                 cur.execute("INSERT INTO airports (code, city) VALUES (%s,%s) ON CONFLICT DO NOTHING", (code, code))
             cur.execute(
-                "INSERT INTO routes (route_code, origin, destination) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING",
-                (body.route, origin, destination),
+                """INSERT INTO routes (route_code, origin, destination, route_type)
+                   SELECT %s, %s, %s, CASE WHEN EXISTS (SELECT 1 FROM airports WHERE code IN (%s,%s) AND country <> 'CO')
+                                           THEN 'INTERNACIONAL' ELSE 'NACIONAL' END
+                   ON CONFLICT DO NOTHING""",
+                (body.route, origin, destination, origin, destination),
             )
             if body.flight_number:
                 # flights.flight_number referencia scheduled_flights: se registra si no existe

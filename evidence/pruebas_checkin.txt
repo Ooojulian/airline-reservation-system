@@ -1,0 +1,4 @@
+Pruebas del repo (tests/test_api.py y tests/test_checkin.py) - 2026-10-21
+Ejecutadas en la EC2 contra http://localhost:8000
+
+32 passed in 3.64s

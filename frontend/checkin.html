@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check-in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%2712%27 fill=%27%23c8102e%27/%3E%3Cpath transform=%27rotate(45 12 12)%27 fill=%27%23fff%27 d=%27M19 14.8v-1.5l-6-3.8V5.2a1.1 1.1 0 0 0-2.2 0v4.3l-6 3.8v1.5l6-1.9v4l-1.5 1.1v1.1l2.6-.8 2.6.8v-1.1L13 16.9v-4z%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span><span>Reservas <b>aéreas</b></span></a>
+    <nav aria-label="Secciones"><a href="/">Reservar</a><a href="/checkin" aria-current="page">Check-in</a><a href="/manager">Panel gerencial</a></nav>
+  </div>
+</header>
+
+<section class="hero hero-short">
+  <svg class="hero-art" viewBox="0 0 1440 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <circle class="sun" cx="1130" cy="118" r="62"/>
+    <path class="trail" d="M140 236 C 430 110, 780 60, 1060 128"/>
+    <path class="ridge r1" d="M0 250 L110 196 L210 232 L330 158 L450 220 L560 172 L690 236 L820 148 L940 214 L1060 174 L1190 230 L1310 182 L1440 226 V360 H0Z"/>
+    <path class="ridge r2" d="M0 296 L150 246 L270 284 L410 228 L540 288 L670 244 L800 298 L940 248 L1080 294 L1210 254 L1340 290 L1440 262 V360 H0Z"/>
+    <path class="ridge r3" d="M0 334 L180 298 L330 328 L500 294 L660 332 L820 302 L990 334 L1150 304 L1300 332 L1440 310 V360 H0Z"/>
+  </svg>
+  <div class="hero-inner">
+    <h1>Haga su check-in</h1>
+    <p>Abre 24 horas antes de la salida. Escriba su código de reserva, elija su silla y reciba el pase de abordar.</p>
+  </div>
+</section>
+
+<main>
+  <form id="ci-form" class="search-card" novalidate>
+    <div class="tabs" role="presentation"><a class="tab" href="/">Reservar vuelo</a><span class="tab on">Check-in</span></div>
+    <div class="mgr-form">
+      <label class="field">Código de reserva<input id="ci-code" maxlength="64" autocomplete="off" spellcheck="false" placeholder="Pegue o escriba su código"></label>
+      <button type="submit" class="btn-red" id="ci-load">Buscar reserva</button>
+    </div>
+  </form>
+  <p id="ci-msg" class="msg" role="status"></p>
+
+  <section class="ci-panel" id="ci-panel" hidden aria-labelledby="ci-title">
+    <div class="ci-head">
+      <div>
+        <h2 id="ci-title" class="board-title"></h2>
+        <p class="muted" id="ci-sub"></p>
+      </div>
+      <span class="badge" id="ci-window"></span>
+    </div>
+    <div id="ci-seats" hidden>
+      <h3 class="ci-h3">Elija su silla</h3>
+      <div id="ci-map"></div>
+      <p class="msg" id="ci-seat-msg" role="status"></p>
+      <div class="ci-actions">
+        <p class="hold" id="ci-hold" hidden>Silla <strong id="ci-hold-seat"></strong> reservada para usted. Confirme en <strong id="ci-count" aria-hidden="true">5:00</strong><span class="sr" id="ci-count-sr"></span></p>
+        <button type="button" class="btn-red" id="ci-confirm" disabled>Confirmar check-in</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="pass" id="ci-pass" hidden aria-live="polite" aria-labelledby="ci-pass-title">
+    <div class="pass-main">
+      <p class="pass-ok" id="ci-pass-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>Check-in listo, pase de abordar</p>
+      <p class="pass-route"><span id="bp-o"></span><span class="pass-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span><span id="bp-d"></span></p>
+      <dl class="pass-meta">
+        <div><dt>Pasajero</dt><dd id="bp-name"></dd></div>
+        <div><dt>Vuelo</dt><dd id="bp-flight"></dd></div>
+        <div><dt>Salida</dt><dd id="bp-dep"></dd></div>
+        <div><dt>Clase</dt><dd id="bp-fare"></dd></div>
+      </dl>
+    </div>
+    <div class="pass-stub">
+      <span>Silla</span>
+      <strong id="bp-seat"></strong>
+      <span>Grupo de abordaje <b id="bp-group"></b></span>
+    </div>
+  </section>
+</main>
+<footer class="foot">Proyecto académico de Big Data, Universidad Sergio Arboleda.</footer>
+<script src="app.js"></script>
+<script>initCheckin();</script>
+</body>
+</html>

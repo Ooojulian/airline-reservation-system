@@ -19,7 +19,7 @@ Automated score: **70.0 / 70.0**
 
 ## R1 Flight search latency - passed
 - passed: `test_search_p95` 
-- evidence: 100 requests, concurrency 20: p50=0.032s p95=0.075s
+- evidence: 100 requests, concurrency 20: p50=0.043s p95=0.084s
 
 ## R2 No overselling under concurrency - passed
 - passed: `test_last_seat_exactly_one` 
@@ -62,16 +62,16 @@ Automated score: **70.0 / 70.0**
 ## R7 Analytics endpoint backed by Athena - passed
 - passed: `test_endpoint_matches_oracle_and_uses_athena` 
 - passed: `test_endpoint_unknown_is_404` 
-- evidence: MDE-CTG 2023-01: ok in 1.34s
-- evidence: CUC-BGA 2024-08: ok in 1.33s
-- evidence: MDE-CTG 2024-07: ok in 1.29s
-- evidence: PEI-MDE 2024-04: ok in 0.88s
-- evidence: CUC-BGA 2024-04: ok in 1.31s
-- evidence: 7 Athena queries submitted during the probes
+- evidence: MDE-CTG 2023-01: ok in 1.47s
+- evidence: CUC-BGA 2024-08: ok in 1.28s
+- evidence: MDE-CTG 2024-07: ok in 1.31s
+- evidence: PEI-MDE 2024-04: ok in 1.27s
+- evidence: CUC-BGA 2024-04: ok in 1.30s
+- evidence: 8 Athena queries submitted during the probes
 
 ## R8 Customer flow in browser - passed
 - passed: `test_search_reserve_confirm` 
-- evidence: UI created reservation W9RTZU for a flight; backend returns it
+- evidence: UI created reservation EPWVY4 for a flight; backend returns it
 
 ## R9 Manager panel matches endpoint - passed
 - passed: `test_manager_panel_equals_endpoint` 
@@ -92,5 +92,5 @@ Automated score: **70.0 / 70.0**
 ## R12 Cost projection - passed
 - passed: `test_projection_file` 
 - passed: `test_projection_consistent_with_live` 
-- evidence: declared total 34.83 USD/month; limit 50.00 (min of 1.5x reference 60.0 and budget 50.0)
+- evidence: declared total 31.18 USD/month; limit 50.00 (min of 1.5x reference 60.0 and budget 50.0)
 - evidence: cost estimated from live resources: 28.67 {'RDS': 12.41, 'EC2': 15.18, 'EMR': 1.08, 'Athena': 0.0, 'S3': 0.0}

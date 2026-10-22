@@ -3,7 +3,7 @@
     "team_id": "cristancho-urrego",
     "seed": 2682
   },
-  "generated_at": "2026-10-21 17:30:36",
+  "generated_at": "2026-10-22 03:16:19",
   "points": 70.0,
   "max_points": 70.0,
   "requirements": [
@@ -21,7 +21,7 @@
         }
       ],
       "evidence": [
-        "100 requests, concurrency 20: p50=0.032s p95=0.075s"
+        "100 requests, concurrency 20: p50=0.043s p95=0.084s"
       ],
       "warnings": []
     },
@@ -179,12 +179,12 @@
         }
       ],
       "evidence": [
-        "MDE-CTG 2023-01: ok in 1.34s",
-        "CUC-BGA 2024-08: ok in 1.33s",
-        "MDE-CTG 2024-07: ok in 1.29s",
-        "PEI-MDE 2024-04: ok in 0.88s",
-        "CUC-BGA 2024-04: ok in 1.31s",
-        "7 Athena queries submitted during the probes"
+        "MDE-CTG 2023-01: ok in 1.47s",
+        "CUC-BGA 2024-08: ok in 1.28s",
+        "MDE-CTG 2024-07: ok in 1.31s",
+        "PEI-MDE 2024-04: ok in 1.27s",
+        "CUC-BGA 2024-04: ok in 1.30s",
+        "8 Athena queries submitted during the probes"
       ],
       "warnings": []
     },
@@ -202,7 +202,7 @@
         }
       ],
       "evidence": [
-        "UI created reservation W9RTZU for a flight; backend returns it"
+        "UI created reservation EPWVY4 for a flight; backend returns it"
       ],
       "warnings": []
     },
@@ -292,7 +292,7 @@
         }
       ],
       "evidence": [
-        "declared total 34.83 USD/month; limit 50.00 (min of 1.5x reference 60.0 and budget 50.0)",
+        "declared total 31.18 USD/month; limit 50.00 (min of 1.5x reference 60.0 and budget 50.0)",
         "cost estimated from live resources: 28.67 {'RDS': 12.41, 'EC2': 15.18, 'EMR': 1.08, 'Athena': 0.0, 'S3': 0.0}"
       ],
       "warnings": []

@@ -1,13 +1,13 @@
 -- Datos de ejemplo 100% SQL. Ejecutar después de schema.sql:  psql -f seed.sql
 -- Reproducible: setseed + cantidades derivadas de hash(flight_id).
--- Resultado: 12 aeropuertos, 8 rutas, 1.448 vuelos (2026-06-01 a 2026-11-28, 150 sillas),
--- ~150k reservas (~12% canceladas, 85% ECONOMY / 15% BUSINESS, ~20k con escala).
+-- Resultado: 16 aeropuertos, 32 rutas, 5.792 vuelos (1.448 + 724 internacionales + 3.620 nacionales nuevos) (2026-06-01 a 2026-11-28, 150 sillas),
+-- ~150k reservas (~12% canceladas, 85% M / 15% PR; ademas 724 vuelos internacionales sin reservas, ~20k con escala).
 
 BEGIN;
 SELECT setseed(0.2026);
 
 -- Limpieza (conserva fare_rules de schema.sql)
-TRUNCATE payments, reservation_segments, reservations, passengers, flights,
+TRUNCATE seat_holds, seat_assignments, payments, reservation_segments, reservations, passengers, flights,
          scheduled_flights, aircraft, routes, airports RESTART IDENTITY CASCADE;
 
 INSERT INTO airports VALUES ('BOG','Bogotá'),('MDE','Medellín'),('CLO','Cali'),('CTG','Cartagena'),
@@ -76,7 +76,7 @@ WITH raw AS (
 )
 SELECT row_number() OVER ()                                         AS n,
        f1, f2,
-       CASE WHEN random() < 0.15 THEN 'BUSINESS' ELSE 'ECONOMY' END AS cls,
+       CASE WHEN random() < 0.15 THEN 'PR' ELSE 'M' END AS cls,
        floor(random() * 61)::int                                    AS days_before,
        CASE WHEN random() < 0.12 THEN 'CANCELLED' ELSE 'CONFIRMED' END AS st
 FROM raw;
@@ -115,6 +115,65 @@ SELECT r.reservation_id, r.total_price_cents, 'SIMULADO', 'SIM-' || r.reservatio
        CASE WHEN r.status = 'CANCELLED' THEN 'REFUNDED' ELSE 'APPROVED' END,
        r.created_at, r.updated_at
 FROM reservations r;
+
+-- Vuelos internacionales (sin reservas en el seed)
+INSERT INTO airports (code, city, country) VALUES
+ ('MIA','Miami','US'),('PTY','Ciudad de Panamá','PA'),('LIM','Lima','PE'),('UIO','Quito','EC')
+;
+
+INSERT INTO routes (route_code, origin, destination, route_type) VALUES
+ ('BOG-MIA','BOG','MIA','INTERNACIONAL'),('MIA-BOG','MIA','BOG','INTERNACIONAL'),
+ ('BOG-PTY','BOG','PTY','INTERNACIONAL'),('PTY-BOG','PTY','BOG','INTERNACIONAL')
+;
+
+INSERT INTO aircraft (aircraft_id, model, capacity) VALUES
+ ('AC-09','Airbus A320',150),('AC-10','Airbus A320',150),('AC-11','Airbus A320',150),('AC-12','Airbus A320',150)
+;
+
+INSERT INTO scheduled_flights (flight_number, route_code, departure_time, days_of_week, aircraft_id) VALUES
+ ('AV109','BOG-MIA','07:15','1234567','AC-09'),('AV110','MIA-BOG','12:30','1234567','AC-10'),
+ ('AV111','BOG-PTY','09:40','1234567','AC-11'),('AV112','PTY-BOG','14:20','1234567','AC-12')
+;
+
+INSERT INTO flights (flight_id, flight_number, route_code, aircraft_id, flight_date, departure_time,
+                     capacity, seats_available, price_cents)
+SELECT s.flight_number || '-' || to_char(d, 'YYYYMMDD'), s.flight_number, s.route_code, s.aircraft_id,
+       d::date, s.departure_time, 150, 150,
+       (round((CASE s.route_code WHEN 'BOG-MIA' THEN 1450000 WHEN 'MIA-BOG' THEN 1430000
+                                 WHEN 'BOG-PTY' THEN 980000 ELSE 970000 END
+               * (0.9 + (abs(hashtext(s.flight_number || to_char(d, 'YYYYMMDD'))) % 21) / 100.0)) / 1000) * 1000 * 100)::bigint
+FROM scheduled_flights s
+CROSS JOIN generate_series(date '2026-06-01', date '2026-11-28', interval '1 day') d
+WHERE s.flight_number IN ('AV109','AV110','AV111','AV112')
+;
+
+
+-- Rutas nacionales adicionales (20, ida y vuelta): conectan los 12 aeropuertos. Sin reservas en el seed.
+CREATE TEMP TABLE IF NOT EXISTS nac_new (k int, route_code text, origin char(3), destination char(3), base int) ON COMMIT DROP;
+INSERT INTO nac_new
+SELECT row_number() OVER (ORDER BY o, d, dir), o || '-' || d, CASE WHEN dir = 0 THEN o ELSE d END, CASE WHEN dir = 0 THEN d ELSE o END, base
+FROM (VALUES ('BOG','BGA',260000),('BOG','BAQ',330000),('BOG','SMR',360000),('BOG','PEI',250000),
+             ('BOG','CUC',340000),('BOG','ADZ',520000),('BOG','LET',560000),('BOG','PSO',380000),
+             ('MDE','BGA',270000),('MDE','BAQ',310000)) AS p(o, d, base)
+CROSS JOIN (VALUES (0),(1)) AS x(dir);
+UPDATE nac_new SET route_code = origin || '-' || destination;
+
+INSERT INTO routes (route_code, origin, destination, route_type)
+SELECT route_code, origin, destination, 'NACIONAL' FROM nac_new ON CONFLICT (route_code) DO NOTHING;
+INSERT INTO aircraft (aircraft_id, model, capacity)
+SELECT 'AC-' || (12 + k), 'Airbus A320', 150 FROM nac_new ON CONFLICT (aircraft_id) DO NOTHING;
+INSERT INTO scheduled_flights (flight_number, route_code, departure_time, days_of_week, aircraft_id)
+SELECT 'AV' || (112 + k), route_code, time '05:30' + ((k * 47) % 960) * interval '1 minute', '1234567', 'AC-' || (12 + k)
+FROM nac_new ON CONFLICT (flight_number) DO NOTHING;
+INSERT INTO flights (flight_id, flight_number, route_code, aircraft_id, flight_date, departure_time,
+                     capacity, seats_available, price_cents)
+SELECT s.flight_number || '-' || to_char(d, 'YYYYMMDD'), s.flight_number, s.route_code, s.aircraft_id,
+       d::date, s.departure_time, 150, 150,
+       (round((n.base * (0.9 + (abs(hashtext(s.flight_number || to_char(d, 'YYYYMMDD'))) % 21) / 100.0)) / 1000) * 1000 * 100)::bigint
+FROM nac_new n
+JOIN scheduled_flights s ON s.route_code = n.route_code
+CROSS JOIN generate_series(date '2026-06-01', date '2026-11-28', interval '1 day') d
+ON CONFLICT (flight_id) DO NOTHING;
 
 -- Consistencia: seats_available = capacity - tramos CONFIRMED
 UPDATE flights SET seats_available = capacity;

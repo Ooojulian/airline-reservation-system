@@ -91,7 +91,7 @@ def test_reserva_directa():
     d = r.json()
     assert len(d["reservation_id"]) == 6 and d["reservation_id"].isalnum()
     assert d["status"] == "CONFIRMED" and d["flight_id"] == f["flight_id"]
-    assert d["passenger_name"] == "Ana Directa" and d["fare_class"] == "ECONOMY"
+    assert d["passenger_name"] == "Ana Directa" and d["fare_class"] == "M"
     assert d["total_price_cents"] == PRICE  # fecha lejana => multiplicador 1.00
     assert len(d["segments"]) == 1
     assert d["payment"]["status"] == "APPROVED"
@@ -106,7 +106,7 @@ def test_reserva_con_escala():
     assert r.status_code == 201, r.text
     d = r.json()
     assert [s["flight_id"] for s in d["segments"]] == [a["flight_id"], b["flight_id"]]
-    assert d["total_price_cents"] == int(50_000_000 * 2.5)  # BUSINESS lejano = 2.50
+    assert d["total_price_cents"] == int(50_000_000 * 2.2)  # BUSINESS (alias de PR) lejano = 2.20
     assert seats(a["flight_id"]) == 4 and seats(b["flight_id"]) == 4
 
 

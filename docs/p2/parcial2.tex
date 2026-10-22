@@ -148,13 +148,15 @@ El cliente busca y reserva en \texttt{/} y la API actualiza el inventario en RDS
 
 \subsection{Modelo de hosting}
 \trazo{Requisitos: R1, R2, R11, R12 y RF-14 del parcial 1}{Pilares: eficiencia de costo, fiabilidad, eficiencia de rendimiento}
-Backend y frontend corren como dos contenedores Docker en una sola EC2 t3.small (\texttt{airline-api} en el 8000 y \texttt{airline-web}, nginx, en el 3000). El inventario está en RDS PostgreSQL 16 db.t3.micro, single-AZ. Se eligió así porque es lo más barato que cumple R1 y R2. La reserva es una transacción con un \texttt{UPDATE} condicional (\texttt{seats\_available = seats\_available - 1 WHERE seats\_available > 0}), y eso lo resuelve PostgreSQL sin servicios extra. En la corrida del harness la búsqueda dio p95 de 0,075~s con 20 clientes simultáneos (límite 1,0~s) y las 5 rondas de 50 reservas simultáneas dejaron exactamente 1 respuesta 201 y 49 respuestas 409.
+Backend y frontend corren como dos contenedores Docker en una sola EC2 t3.small (\texttt{airline-api} en el 8000 y \texttt{airline-web}, nginx, en el 3000). El inventario está en RDS PostgreSQL 16 db.t3.micro, single-AZ. Se eligió así porque es lo más barato que cumple R1 y R2. La reserva es una transacción con un \texttt{UPDATE} condicional (\texttt{seats\_available = seats\_available - 1 WHERE seats\_available > 0}), y eso lo resuelve PostgreSQL sin servicios extra. En la corrida del harness la búsqueda dio p95 de 0,084~s con 20 clientes simultáneos (límite 1,0~s) y las 5 rondas de 50 reservas simultáneas dejaron exactamente 1 respuesta 201 y 49 respuestas 409.
 
 Se descartaron alternativas más gestionadas (por ejemplo contenedores en un servicio orquestado detrás de un balanceador) porque el balanceador solo ya cuesta unos US\$16 al mes y R11 pide una arquitectura simple. Se descartó instalar PostgreSQL dentro de la EC2 para no encargarnos nosotros de copias de seguridad y parches, que RDS ya incluye. Multi-AZ está prohibido por R11, así que aceptamos un riesgo de fiabilidad: si la zona cae, el sistema cae. Para este parcial es un riesgo aceptable y está declarado.
 
-El frontend estático va en la misma EC2 y no en S3 con CloudFront. Así no se agrega un servicio facturable y el navegador habla con un solo origen, lo que evita problemas de CORS. Son dos páginas: la del cliente (buscar, reservar y ver el código en un pase de abordar) y el panel gerencial (ocupación de la ruta en el mes, un plano de cabina donde cada silla es el 1\,\% y barras con los 12 meses del año de esa ruta). No usamos IP elástica para no pagar US\$3,65 al mes; la IP pública cambia en cada arranque y \texttt{infra/encender.sh} la escribe en \texttt{config.yaml}.
+El frontend estático va en la misma EC2 y no en S3 con CloudFront. Así no se agrega un servicio facturable y el navegador habla con un solo origen, lo que evita problemas de CORS. Son tres páginas: la del cliente (buscar, elegir tarifa, reservar y ver el código en un pase de abordar), la de \emph{check-in} y el panel gerencial (ocupación de la ruta en el mes, un plano de cabina donde cada silla es el 1\,\% y barras con los 12 meses del año de esa ruta). No usamos IP elástica para no pagar US\$3,65 al mes; la IP pública cambia en cada arranque y \texttt{infra/encender.sh} la escribe en \texttt{config.yaml}.
 
 Seguridad: la base nunca se abre a internet. Los puertos 8000 y 3000 del grupo de seguridad de la API solo permiten las IPs del equipo. Para la ventana de calificación, el script \texttt{infra/abrir\_calificacion.sh} los abre a internet y \texttt{infra/cerrar\_calificacion.sh} los cierra después. Es temporal porque \texttt{POST /admin/flights}, que exige el contrato, no tiene autenticación.
+
+\paragraph{Lo que se agregó del parcial 1.} El sistema ahora implementa las clases tarifarias y el \emph{check-in} que definimos en el parcial 1 (RN-08, RF-20 a RF-24, RF-81 y RF-82). Hay cinco clases: XS, S y M eligen silla solo en el \emph{check-in}; L y PR la pueden elegir al comprar. El \emph{check-in} abre 24 horas antes y cierra 1 hora antes en vuelos nacionales o 2 horas antes en internacionales. Hay 32 rutas, 4 de ellas internacionales. Mientras el pasajero escoge, la silla queda bloqueada 5 minutos, pero lo que de verdad impide que dos pasajeros tengan la misma silla es la clave primaria \texttt{(flight\_id, seat\_no)} de \texttt{seat\_assignments}: el segundo intento recibe 409. Para no romper el contrato del harness, \texttt{ECONOMY} sigue funcionando como alias de M y la tarifa por defecto del frontend es M, que no pide silla. Las pruebas \texttt{tests/test\_checkin.py} (20 bloqueos simultáneos de la misma silla, solo uno gana) pasan junto con las del parcial 1.
 
 \subsection{Por qué EMR}
 \trazo{Requisitos: R4, R10, R11, R12}{Pilares: eficiencia de costo, excelencia operativa, sostenibilidad}
@@ -301,14 +303,14 @@ El \texttt{report.md} final (copia en \texttt{evidence/p2/report.md}) da \textbf
 \toprule
 \textbf{Req.} & \textbf{Criterio} & \textbf{Puntos} & \textbf{Evidencia del reporte} \\
 \midrule
-R1 & Latencia de búsqueda & 4/4 & 100 peticiones, 20 clientes: p50 0,032~s, p95 0,075~s \\
+R1 & Latencia de búsqueda & 4/4 & 100 peticiones, 20 clientes: p50 0,043~s, p95 0,084~s \\
 R2 & Sin sobreventa & 10/10 & 5 rondas de 50: 1 respuesta 201 y 49 respuestas 409; con K=3: 3 respuestas 201; sin 5xx \\
 R3 & Consulta de reserva & 3/3 & 200 si existe, 404 si no \\
 R4 & EMR produce Parquet & 8/8 & 3 corridas COMPLETED; 24 de 24 archivos escritos dentro de una corrida; 2.000.542 filas, igual que el oráculo \\
 R5 & Tablas en Glue & 6/6 & Contrato de ambas tablas y \emph{partition projection} activa \\
 R6 & Correctitud y poda & 8/8 & Top 10 igual al oráculo; consulta de un mes escaneó 308.482~B, límite 1.623.227~B \\
-R7 & Endpoint con Athena & 8/8 & 5 pares entre 0,88 y 1,34~s; 7 consultas en el historial de Athena \\
-R8 & Flujo del cliente & 6/6 & La interfaz creó la reserva W9RTZU y el backend la devolvió \\
+R7 & Endpoint con Athena & 8/8 & 5 pares entre 1,3 y 1,5~s; 8 consultas en el historial de Athena \\
+R8 & Flujo del cliente & 6/6 & La interfaz creó la reserva EPWVY4 y el backend la devolvió \\
 R9 & Panel igual al endpoint & 4/4 & CLO-MDE 2024-08: panel, endpoint y valor esperado 0,6096 \\
 R10 & Sin EMR encendido & 5/5 & 0 clústeres activos; 36,0 horas normalizadas (tope 150) \\
 R11 & Arquitectura simple & 4/4 & 7 servicios facturables; instancias permitidas; sin NAT ni Multi-AZ \\
@@ -393,6 +395,7 @@ Usamos Claude Code como orquestador, que a su vez delegó tareas en agentes (inf
 8 & Rediseñar el frontend con tonos rojos y más trabajado, sin cambiar los selectores del contrato. & Nuevo diseño del cliente y del panel; se volvió a correr el harness (70/70). \\
 9 & Probar con otra semilla. & Se aclaró que el profesor usa la misma semilla con otras sondas; se corrieron R4 a R9 con tres \emph{probe salts} distintos y todo pasó. \\
 10 & No pagar IP elástica. & Se liberó; \texttt{encender.sh} actualiza la IP en \texttt{config.yaml} y el costo declarado bajó a US\$31,18. \\
+11 & Implementar el \emph{check-in} y las clases del parcial 1 sin romper el contrato. & Clases XS a PR con alias ECONOMY, sillas y \emph{check-in}; el harness siguió en 70/70. \\
 \bottomrule
 \end{tabular}
 \caption{Bitácora de prompts.}
