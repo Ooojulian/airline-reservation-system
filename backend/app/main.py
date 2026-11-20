@@ -15,13 +15,13 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
 
 import psycopg
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from psycopg_pool import PoolTimeout
 from pydantic import BaseModel, Field, field_validator
 
-from . import db
+from . import db, events, star
 from .analytics import router as analytics_router
 from .checkin import (MSG_CHECKIN_SEAT, assign_seat, canonical_fare, load_reservation, release_seats,
                       router as checkin_router, validate_seat)
@@ -30,6 +30,7 @@ from .checkin import (MSG_CHECKIN_SEAT, assign_seat, canonical_fare, load_reserv
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.pool.open()
+    events.start()
     yield
     db.pool.close()
 
@@ -38,6 +39,8 @@ app = FastAPI(title="Sistema de Reservas Aéreas", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"], allow_headers=["*"])
 app.include_router(analytics_router)
 app.include_router(checkin_router)
+app.include_router(events.router)
+app.include_router(star.router)
 
 CODE_ALPHABET = string.ascii_uppercase + string.digits
 ROUTE_RE = re.compile(r"^[A-Z]{3}-[A-Z]{3}$")
@@ -119,6 +122,7 @@ def search_flights(
     origin: str = Query(pattern=r"^[A-Za-z]{3}$"),
     destination: str = Query(pattern=r"^[A-Za-z]{3}$"),
     date: date = Query(),
+    x_session_id: str | None = Header(default=None),
 ):
     origin, destination = origin.upper(), destination.upper()
     if origin == destination:
@@ -133,7 +137,9 @@ def search_flights(
                ORDER BY f.departure_time, f.flight_id""",
             (origin, destination, date),
         )
-        return cur.fetchall()
+        rows = cur.fetchall()
+    events.publish_search(x_session_id, origin, destination, str(date), len(rows))  # asíncrono (cola)
+    return rows
 
 
 @app.get("/flights/{flight_id}")
@@ -250,7 +256,9 @@ def create_reservation(body: ReservationIn):
     # Ante deadlock/serialización (no esperados por el orden de bloqueo) se reintenta la transacción.
     for attempt in range(4):
         try:
-            return _create_reservation(body)
+            res = _create_reservation(body)
+            events.publish_reservation("reservation_created", res)  # después del COMMIT
+            return res
         except (psycopg.errors.DeadlockDetected, psycopg.errors.SerializationFailure):
             _time.sleep(0.05 * (attempt + 1))
     raise HTTPException(503, "contención alta, reintente")
@@ -267,6 +275,12 @@ def get_reservation(reservation_id: str):
 
 @app.post("/reservations/{reservation_id}/cancel")
 def cancel_reservation(reservation_id: str):
+    res = _cancel_reservation(reservation_id)
+    events.publish_reservation("reservation_cancelled", res)  # después del COMMIT
+    return res
+
+
+def _cancel_reservation(reservation_id: str) -> dict:
     rid = reservation_id.strip().upper()
     with db.pool.connection() as conn:
         cur = conn.cursor()
