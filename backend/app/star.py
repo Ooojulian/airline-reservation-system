@@ -54,7 +54,7 @@ SETUP = [
 # (tabla, SELECT, partición). El orden importa: las dimensiones antes que los hechos.
 TABLES = [
     ("dim_date", """
-WITH d AS (SELECT dt FROM UNNEST(sequence(DATE '2023-01-01', DATE '2027-12-31', INTERVAL '1' DAY)) AS t(dt)),
+WITH d AS (SELECT CAST(dt AS date) AS dt FROM UNNEST(sequence(DATE '2023-01-01', DATE '2027-12-31', INTERVAL '1' DAY)) AS t(dt)),
 h AS (SELECT CAST(holiday_date AS date) AS hd, max(holiday_name) AS holiday_name FROM ref_holidays GROUP BY 1)
 SELECT CAST(date_format(d.dt, '%Y%m%d') AS integer) AS date_key,
        d.dt AS full_date,
