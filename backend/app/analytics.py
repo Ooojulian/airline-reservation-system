@@ -16,8 +16,8 @@ from fastapi import APIRouter, HTTPException, Query
 router = APIRouter()
 
 REGION = os.getenv("AWS_REGION", "us-east-1")
-DATABASE = os.getenv("ATHENA_DATABASE", "airline_analytics")
-WORKGROUP = os.getenv("ATHENA_WORKGROUP", "primary")
+DATABASE = os.getenv("P2_ATHENA_DATABASE", "airline_analytics")
+WORKGROUP = os.getenv("P2_ATHENA_WORKGROUP", "primary")
 OUTPUT = os.getenv("ATHENA_OUTPUT", "s3://airline-system-930581488240/athena-results/")
 TIMEOUT_S = float(os.getenv("ATHENA_TIMEOUT", "9"))
 CACHE_TTL = float(os.getenv("ANALYTICS_CACHE_TTL", "600"))
