@@ -1,0 +1,15 @@
+team_id: "cristancho-urrego"
+seed: 2682
+
+backend:
+  base_url: "http://54.80.1.159:8000"
+
+aws:
+  region: us-east-1
+  kinesis_stream: airline-events
+  raw_events_uri: "s3://airline-system-930581488240/raw/events/"
+  athena_workgroup: airline-p3
+  athena_database: airline_star
+  athena_output: "s3://airline-system-930581488240/athena-results/p3/"
+
+cost_projection_file: cost_projection.yaml
