@@ -9,5 +9,5 @@ line_items:
   - {service: "Kinesis", detail: "1 shard provisionado solo en pruebas: 60 h x 0.015 = 0.90 + PUT units centavos", monthly_usd: 0.92}
   - {service: "Firehose", detail: "entrega Kinesis -> S3 en GZIP, ~0.15 GB/mes x 0.029", monthly_usd: 0.01}
   - {service: "S3", detail: "landing zone + Parquet de la estrella + resultados Athena, < 1 GB", monthly_usd: 0.10}
-  - {service: "Athena", detail: "~200 refrescos CTAS + ~1.000 consultas, minimo 10 MB c/u = ~12 GB x 5 USD/TB", monthly_usd: 0.06}
+  - {service: "Athena", detail: "200 refrescos CTAS (5 consultas c/u) + ~200 consultas, minimo 10 MB c/u = ~12 GB x 5 USD/TB", monthly_usd: 0.06}
   - {service: "Glue", detail: "Data Catalog: 2 bases y ~10 tablas, capa gratuita", monthly_usd: 0.00}
